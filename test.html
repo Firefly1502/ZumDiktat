@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+
+<html>
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CSP Test</title>
+<style>
+body { font-family: sans-serif; padding: 20px; background: #111; color: #fff; }
+button { display: block; width: 100%; padding: 20px; margin: 10px 0; font-size: 18px; border-radius: 12px; border: none; background: #7b5cff; color: white; cursor: pointer; }
+#log { margin-top: 20px; padding: 12px; background: #222; border-radius: 8px; font-size: 13px; font-family: monospace; min-height: 120px; }
+</style>
+</head>
+<body>
+<h2>GitHub Pages CSP Test</h2>
+
+<button onclick="log('onclick funktioniert!')">TEST 1: onclick Attribut</button>
+<button id="btn2">TEST 2: addEventListener</button>
+<button id="btn3">TEST 3: Beide zusammen</button>
+
+<div id="log">Tippe auf einen Button...<br></div>
+
+<script>
+var logEl = document.getElementById('log');
+function log(msg) {
+  logEl.innerHTML += new Date().toLocaleTimeString() + ': ' + msg + '<br>';
+}
+
+log('Script geladen OK');
+
+// Check CSP
+var meta = document.querySelector('meta[http-equiv="Content-Security-Policy"]');
+log('CSP Meta-Tag: ' + (meta ? meta.content : 'keiner'));
+
+document.getElementById('btn2').addEventListener('click', function() {
+  log('addEventListener funktioniert!');
+});
+
+document.getElementById('btn3').addEventListener('click', function() {
+  log('btn3 addEventListener OK');
+});
+document.getElementById('btn3').setAttribute('onclick', "log('btn3 onclick OK')");
+
+// Check response headers via fetch
+fetch(window.location.href).then(function(r) {
+  var csp = r.headers.get('content-security-policy');
+  var xframe = r.headers.get('x-frame-options');
+  log('CSP Header: ' + (csp || 'keiner'));
+  log('X-Frame: ' + (xframe || 'keiner'));
+}).catch(function(e) {
+  log('Header-Check Fehler: ' + e.message);
+});
+</script>
+
+</body>
+</html>
