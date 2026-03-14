@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+
+<html>
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Safari Test</title>
+<style>
+body { font-family: sans-serif; padding: 20px; background: #111; color: #fff; }
+button { display: block; width: 100%; padding: 20px; margin: 10px 0; font-size: 18px; border-radius: 12px; border: none; background: #7b5cff; color: white; cursor: pointer; }
+#log { margin-top: 20px; padding: 12px; background: #222; border-radius: 8px; font-size: 13px; font-family: monospace; min-height: 100px; }
+</style>
+</head>
+<body>
+<h2>Safari JS Test</h2>
+<button id="btn1">TEST 1: Button klick</button>
+<button id="btn2">TEST 2: localStorage</button>
+<button id="btn3">TEST 3: fetch API</button>
+<div id="log">Warte auf Tippen...</div>
+
+<script>
+var log = document.getElementById('log');
+function addLog(msg) {
+  log.innerHTML += '<div>' + new Date().toLocaleTimeString() + ': ' + msg + '</div>';
+}
+
+addLog('Script geladen OK');
+
+document.getElementById('btn1').addEventListener('click', function() {
+  addLog('Button 1 funktioniert!');
+});
+
+document.getElementById('btn2').addEventListener('click', function() {
+  try {
+    localStorage.setItem('test', '123');
+    var v = localStorage.getItem('test');
+    addLog('localStorage OK: ' + v);
+  } catch(e) {
+    addLog('localStorage FEHLER: ' + e.message);
+  }
+});
+
+document.getElementById('btn3').addEventListener('click', function() {
+  addLog('fetch wird getestet...');
+  fetch('https://api.anthropic.com/v1/messages', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'}
+  }).then(function() {
+    addLog('fetch: Antwort erhalten');
+  }).catch(function(e) {
+    addLog('fetch FEHLER: ' + e.message);
+  });
+});
+
+document.addEventListener('touchstart', function(e) {
+  var el = document.elementFromPoint(e.touches[0].clientX, e.touches[0].clientY);
+  addLog('Touch auf: ' + el.tagName + ' id=' + (el.id||'-'));
+}, {passive: true});
+
+window.onerror = function(msg, src, line) {
+  addLog('JS FEHLER Zeile ' + line + ': ' + msg);
+};
+</script>
+
+</body>
+</html>
