@@ -1,0 +1,1195 @@
+<!DOCTYPE html>
+
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>Diktiergerät</title>
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Diktiergerät">
+<meta name="theme-color" id="themeColor" content="#0a0a0f">
+<link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Crect width='512' height='512' rx='115' fill='%230a0a0f'/%3E%3Crect x='228' y='140' width='56' height='160' rx='28' fill='%23ff3c5a'/%3E%3Ccircle cx='256' cy='220' r='80' fill='none' stroke='%23ff3c5a' stroke-width='28'/%3E%3Cpath d='M160 260 Q160 360 256 360 Q352 360 352 260' fill='none' stroke='%23ff3c5a' stroke-width='28' stroke-linecap='round'/%3E%3Crect x='228' y='360' width='56' height='60' fill='%23ff3c5a' rx='8'/%3E%3Crect x='180' y='410' width='152' height='28' rx='14' fill='%23ff3c5a'/%3E%3C/svg%3E">
+<script>
+try {
+  var _m={name:"Diktiergeraet",short_name:"Diktier",start_url:"./",display:"standalone",background_color:"#0a0a0f",theme_color:"#0a0a0f",orientation:"portrait"};
+  var _l=document.createElement('link');_l.rel='manifest';
+  _l.href=URL.createObjectURL(new Blob([JSON.stringify(_m)],{type:'application/json'}));
+  document.head.appendChild(_l);
+} catch(e){}
+</script>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style id="main-style">
+/* ── DARK THEME (default) ── */
+body {
+  --bg:#0a0a0f; --surface:#12121a; --surface2:#1a1a26; --border:#2a2a3d;
+  --text:#e8e8f0; --muted:#666680; --rec:#ff3c5a; --rec-glow:rgba(255,60,90,0.3);
+  --ok:#00e5a0; --ok-glow:rgba(0,229,160,0.25); --accent:#7b5cff;
+  --shadow:rgba(0,0,0,0.5); --grad:rgba(123,92,255,0.12);
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+html{height:100%;}
+body{min-height:100%;font-family:'DM Mono',monospace;background-color:var(--bg);color:var(--text);}
+body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellipse 80% 50% at 50% -10%,var(--grad),transparent);pointer-events:none;z-index:0;}
+.app{max-width:480px;margin:0 auto;padding:20px 16px 80px;position:relative;z-index:1;}
+
+/* ── HEADER ── */
+header{display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;}
+.logo{font-weight:500;font-size:16px;color:var(–text);}
+.logo span{color:var(–rec);}
+.header-right{display:flex;align-items:center;gap:8px;}
+.theme-btn{background:var(–surface);border:1px solid var(–border);border-radius:20px;padding:5px 10px;cursor:pointer;font-size:16px;line-height:1;color:var(–text);}
+.chip{display:flex;align-items:center;gap:6px;background:var(–surface);border:1px solid var(–border);border-radius:20px;padding:5px 12px;font-size:11px;color:var(–text);}
+.dot{width:7px;height:7px;border-radius:50%;background:var(–muted);flex-shrink:0;transition:all 0.3s;}
+.dot.rec{background:var(–rec);box-shadow:0 0 8px var(–rec-glow);animation:pulse 1s infinite;}
+.dot.ok{background:var(–ok);}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:0.4}}
+
+/* ── BANNER ── */
+.mic-banner{background:rgba(123,92,255,0.12);border:1px solid rgba(123,92,255,0.4);border-radius:12px;padding:14px 16px;margin-bottom:12px;display:flex;align-items:center;gap:12px;}
+.mic-banner.hidden{display:none;}
+.mic-banner-txt{flex:1;font-size:12px;line-height:1.5;color:var(–text);}
+.mic-banner-txt b{color:var(–accent);}
+.btn-mic{background:var(–accent);border:none;border-radius:10px;padding:10px 14px;color:#fff;font-family:‘DM Mono’,monospace;font-size:12px;font-weight:500;cursor:pointer;}
+
+/* ── CARD ── */
+.card{background:var(–surface);border:1px solid var(–border);border-radius:16px;padding:16px;margin-bottom:12px;box-shadow:0 2px 12px var(–shadow);}
+.lbl{font-size:10px;font-weight:500;letter-spacing:0.12em;color:var(–muted);margin-bottom:10px;text-transform:uppercase;}
+.row{display:flex;gap:8px;}
+.api-input{flex:1;background:var(–surface2);border:1px solid var(–border);border-radius:10px;padding:10px 14px;color:var(–text);font-family:‘DM Mono’,monospace;font-size:13px;outline:none;}
+.api-input:focus{border-color:var(–accent);}
+.btn-sm{background:var(–accent);border:none;border-radius:10px;padding:10px 14px;color:#fff;font-family:‘DM Mono’,monospace;font-size:12px;cursor:pointer;}
+.btn-sm.saved{background:var(–ok);}
+
+/* ── SEGMENTS ── */
+.seg-hdr{display:flex;justify-content:space-between;align-items:center;cursor:pointer;user-select:none;-webkit-user-select:none;}
+.seg-hdr-left{display:flex;align-items:center;gap:8px;}
+.seg-toggle{font-size:12px;color:var(–muted);display:inline-block;transition:transform 0.25s;}
+.seg-toggle.open{transform:rotate(180deg);}
+.seg-cnt{font-size:11px;color:var(–muted);}
+.seg-body{overflow:hidden;max-height:0;opacity:0;transition:max-height 0.3s ease,opacity 0.3s ease;}
+.seg-body.open{max-height:1200px;opacity:1;}
+.seg-list{display:flex;flex-direction:column;gap:8px;padding-top:12px;}
+.empty{display:flex;flex-direction:column;align-items:center;justify-content:center;height:70px;gap:8px;color:var(–muted);font-size:12px;}
+.empty-ico{font-size:22px;opacity:0.4;}
+
+.seg-item{background:var(–surface2);border:1px solid var(–border);border-radius:10px;overflow:hidden;animation:slideIn 0.25s ease;}
+@keyframes slideIn{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:translateY(0)}}
+.seg-item-hdr{display:flex;align-items:center;gap:10px;padding:10px 14px;cursor:pointer;user-select:none;-webkit-user-select:none;}
+.seg-num{font-size:10px;color:var(–accent);font-weight:500;min-width:24px;}
+.seg-preview{font-size:12px;color:var(–muted);flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.seg-chevron{font-size:11px;color:var(–muted);display:inline-block;transition:transform 0.2s;flex-shrink:0;}
+.seg-chevron.open{transform:rotate(180deg);}
+.seg-item-body{max-height:0;overflow:hidden;transition:max-height 0.3s ease;}
+.seg-item-body.open{max-height:500px;}
+.seg-item-content{padding:0 14px 12px;display:flex;flex-direction:column;gap:8px;}
+
+/* editable segment textarea */
+.seg-edit{width:100%;background:var(–bg);border:1px solid var(–accent);border-radius:8px;padding:10px;color:var(–text);font-family:‘DM Mono’,monospace;font-size:13px;line-height:1.6;resize:vertical;min-height:80px;outline:none;}
+.seg-edit:focus{border-color:var(–ok);}
+.seg-txt{font-size:13px;line-height:1.6;color:var(–text);padding:2px 0;}
+.seg-actions{display:flex;gap:6px;flex-wrap:wrap;}
+.seg-del,.seg-copy,.seg-save{background:none;border:1px solid var(–border);border-radius:7px;color:var(–muted);cursor:pointer;font-size:11px;padding:5px 10px;font-family:‘DM Mono’,monospace;}
+.seg-del:hover{border-color:var(–rec);color:var(–rec);}
+.seg-copy:hover{border-color:var(–accent);color:var(–accent);}
+.seg-save{border-color:var(–ok);color:var(–ok);}
+.seg-save:hover{background:rgba(0,229,160,0.1);}
+
+/* ── LIVE BOX ── */
+.live-box{background:rgba(123,92,255,0.08);border:1px solid rgba(123,92,255,0.25);border-radius:10px;padding:12px 14px;font-size:13px;color:var(–muted);line-height:1.5;margin-bottom:12px;display:none;min-height:44px;}
+.live-box.active{display:block;}
+.live-interim{opacity:0.5;}
+
+/* ── REC BAR ── */
+.rec-bar{background:rgba(255,60,90,0.08);border:1px solid rgba(255,60,90,0.25);border-radius:12px;padding:12px 16px;display:flex;align-items:center;gap:12px;margin-bottom:12px;opacity:0;transform:translateY(8px);transition:all 0.2s;}
+.rec-bar.on{opacity:1;transform:translateY(0);}
+.wave{display:flex;gap:3px;align-items:center;}
+.wb{width:3px;border-radius:2px;background:var(–rec);animation:wv 0.8s ease-in-out infinite;}
+.wb:nth-child(1){height:14px;}.wb:nth-child(2){height:20px;animation-delay:.1s;}.wb:nth-child(3){height:26px;animation-delay:.2s;}.wb:nth-child(4){height:20px;animation-delay:.3s;}.wb:nth-child(5){height:14px;animation-delay:.4s;}
+@keyframes wv{0%,100%{transform:scaleY(1)}50%{transform:scaleY(0.35)}}
+.rec-lbl{flex:1;font-size:12px;color:var(–rec);}
+.rec-time{font-size:13px;font-weight:500;color:var(–rec);font-variant-numeric:tabular-nums;}
+
+/* ── PTT ── */
+.ptt-wrap{display:flex;flex-direction:column;align-items:center;gap:16px;margin:4px 0 16px;}
+.ptt-hint{font-size:10px;color:var(–muted);letter-spacing:0.05em;text-align:center;}
+.ptt-buttons{display:flex;gap:24px;align-items:center;}
+.ptt,.ptt-toggle{border-radius:50%;background:var(–surface2);border:2px solid var(–border);cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;color:var(–text);font-family:‘DM Mono’,monospace;font-weight:500;letter-spacing:0.04em;user-select:none;-webkit-user-select:none;touch-action:none;box-shadow:0 4px 16px var(–shadow);transition:all 0.15s;}
+.ptt{width:100px;height:100px;font-size:10px;}
+.ptt-toggle{width:80px;height:80px;font-size:9px;}
+.ptt-ico{font-size:28px;}
+.ptt-toggle .ptt-ico{font-size:22px;}
+.ptt.on,.ptt-toggle.on{background:var(–rec);border-color:var(–rec);box-shadow:0 0 0 8px var(–rec-glow),0 0 30px var(–rec-glow);color:#fff;}
+.ptt.disabled,.ptt-toggle.disabled{opacity:0.35;pointer-events:none;}
+
+/* ── TEXT INPUT MODE (below PTT) ── */
+.manual-input-wrap{width:100%;margin-top:4px;}
+.manual-input-toggle{width:100%;background:none;border:1px dashed var(–border);border-radius:10px;padding:8px;color:var(–muted);font-family:‘DM Mono’,monospace;font-size:11px;cursor:pointer;transition:all 0.2s;}
+.manual-input-toggle:hover{border-color:var(–accent);color:var(–accent);}
+.manual-input-box{display:none;margin-top:8px;flex-direction:column;gap:8px;}
+.manual-input-box.open{display:flex;}
+.manual-textarea{width:100%;background:var(–surface2);border:1px solid var(–border);border-radius:10px;padding:12px;color:var(–text);font-family:‘DM Mono’,monospace;font-size:13px;line-height:1.6;resize:none;min-height:90px;outline:none;}
+.manual-textarea:focus{border-color:var(–accent);}
+.btn-manual-add{background:var(–accent);border:none;border-radius:10px;padding:10px;color:#fff;font-family:‘DM Mono’,monospace;font-size:12px;font-weight:500;cursor:pointer;width:100%;}
+
+/* ── ACTIONS ── */
+.actions{display:flex;gap:8px;margin-bottom:12px;}
+.btn-finish{flex:1;background:var(–ok);border:none;border-radius:12px;padding:14px;color:#fff;font-family:‘DM Mono’,monospace;font-size:13px;font-weight:500;cursor:pointer;transition:box-shadow 0.2s;}
+.btn-finish:disabled{background:var(–surface2);color:var(–muted);cursor:not-allowed;}
+.btn-clear{background:var(–surface);border:1px solid var(–border);border-radius:12px;padding:14px 18px;color:var(–muted);font-size:16px;cursor:pointer;}
+
+/* ── SETTINGS CARD ── */
+.settings-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:4px;}
+.settings-item{}
+.settings-label{font-size:10px;color:var(–muted);letter-spacing:0.08em;text-transform:uppercase;margin-bottom:6px;}
+.settings-select{width:100%;background:var(–surface2);border:1px solid var(–border);border-radius:10px;padding:9px 12px;color:var(–text);font-family:‘DM Mono’,monospace;font-size:12px;outline:none;cursor:pointer;appearance:none;-webkit-appearance:none;background-image:url(“data:image/svg+xml,%3Csvg xmlns=‘http://www.w3.org/2000/svg’ width=‘12’ height=‘8’ viewBox=‘0 0 12 8’%3E%3Cpath d=‘M1 1l5 5 5-5’ stroke=’%23888’ stroke-width=‘1.5’ fill=‘none’ stroke-linecap=‘round’/%3E%3C/svg%3E”);background-repeat:no-repeat;background-position:right 10px center;}
+.settings-select:focus{border-color:var(–accent);}
+.speed-display{font-size:13px;color:var(–accent);font-weight:500;text-align:center;margin-top:4px;}
+input[type=range]{width:100%;accent-color:var(–accent);cursor:pointer;margin-top:4px;}
+
+/* ── RESULT CARD ── */
+.hidden{display:none!important;}
+.res-text{background:var(–surface2);border:1px solid var(–border);border-radius:10px;padding:14px;font-size:13px;line-height:1.7;white-space:pre-wrap;margin-top:10px;max-height:260px;overflow-y:auto;color:var(–text);}
+.res-acts{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px;}
+.res-btn{background:var(–surface2);border:1px solid var(–border);border-radius:8px;padding:8px 12px;color:var(–text);font-family:‘DM Mono’,monospace;font-size:11px;cursor:pointer;}
+.btn-speak{background:var(–surface2);border:1px solid var(–border);border-radius:8px;padding:8px 12px;color:var(–text);font-family:‘DM Mono’,monospace;font-size:11px;cursor:pointer;display:inline-flex;align-items:center;gap:5px;}
+.btn-speak.speaking{background:rgba(0,229,160,0.15);border-color:var(–ok);color:var(–ok);animation:speakPulse 1.2s infinite;}
+@keyframes speakPulse{0%,100%{opacity:1}50%{opacity:0.6}}
+
+/* ── LANG SELECT ── */
+.lang-select{flex:1;background:var(–surface2);border:1px solid var(–border);border-radius:10px;padding:10px 14px;color:var(–text);font-family:‘DM Mono’,monospace;font-size:12px;outline:none;cursor:pointer;appearance:none;-webkit-appearance:none;background-image:url(“data:image/svg+xml,%3Csvg xmlns=‘http://www.w3.org/2000/svg’ width=‘12’ height=‘8’ viewBox=‘0 0 12 8’%3E%3Cpath d=‘M1 1l5 5 5-5’ stroke=’%23888’ stroke-width=‘1.5’ fill=‘none’ stroke-linecap=‘round’/%3E%3C/svg%3E”);background-repeat:no-repeat;background-position:right 12px center;}
+.lang-select option{background:#1a1a26;color:#e8e8f0;}
+.btn-translate{background:var(–accent);border:none;border-radius:10px;padding:10px 16px;color:#fff;font-family:‘DM Mono’,monospace;font-size:12px;font-weight:500;cursor:pointer;}
+.btn-translate:disabled{opacity:0.4;cursor:not-allowed;}
+
+/* ── LIVE TRANSLATOR ── */
+.lt-speak-btn{width:100%;background:var(–surface2);border:1px solid var(–border);border-radius:10px;padding:8px;color:var(–text);font-family:‘DM Mono’,monospace;font-size:11px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;}
+.lt-speak-btn.speaking{color:var(–ok);border-color:var(–ok);animation:speakPulse 1.2s infinite;}
+.lt-box{background:var(–surface2);border:1px solid var(–border);border-radius:10px;padding:12px;min-height:80px;font-size:13px;line-height:1.6;color:var(–text);word-break:break-word;position:relative;}
+.lt-box-input{width:100%;background:transparent;border:none;outline:none;font-family:‘DM Mono’,monospace;font-size:13px;color:var(–text);line-height:1.6;resize:none;min-height:56px;}
+.lt-auto-badge{display:inline-flex;align-items:center;gap:4px;background:rgba(123,92,255,0.15);border:1px solid rgba(123,92,255,0.4);border-radius:20px;padding:3px 8px;font-size:10px;color:var(–accent);margin-bottom:8px;}
+
+/* ── TOAST ── */
+.toast{position:fixed;bottom:30px;left:50%;transform:translateX(-50%) translateY(100px);background:var(–surface);border:1px solid var(–border);border-radius:40px;padding:10px 20px;font-size:12px;font-weight:500;z-index:999;white-space:nowrap;box-shadow:0 4px 20px var(–shadow);color:var(–text);transition:transform 0.3s;}
+.toast.show{transform:translateX(-50%) translateY(0);}
+.toast.ok{border-color:var(–ok);color:var(–ok);}
+.toast.err{border-color:var(–rec);color:var(–rec);}
+
+/* ── DIVIDER ── */
+.section-divider{height:1px;background:var(–border);margin:4px 0 12px;opacity:0.5;}
+</style>
+
+</head>
+<body>
+<div class="app">
+
+  <!-- HEADER -->
+
+  <header>
+    <div class="logo">Michaels Diktierger&auml;t</div>
+    <div class="header-right">
+      <button class="theme-btn" id="themeBtn" onclick="toggleTheme()">&#9728;&#65039;</button>
+      <div class="chip"><div class="dot" id="dot"></div><span id="stxt">Starte&hellip;</span></div>
+    </div>
+  </header>
+
+  <!-- MIC BANNER -->
+
+  <div class="mic-banner" id="micBanner">
+    <div class="mic-banner-txt"><b>Mikrofon-Zugriff erforderlich</b><br>Einmalig freigeben.</div>
+    <button class="btn-mic" onclick="requestMic()">&#127908; Erlauben</button>
+  </div>
+
+  <!-- API KEY CARD -->
+
+  <div class="card" style="padding:0;overflow:hidden;">
+    <div onclick="toggleApiCard()" style="display:flex;justify-content:space-between;align-items:center;padding:12px 16px;cursor:pointer;user-select:none;-webkit-user-select:none;">
+      <span style="font-size:12px;color:var(--muted);">&#128273; API-Schluessel</span>
+      <span id="apiChevron" style="font-size:11px;color:var(--muted);transition:transform 0.25s;display:inline-block;">&#9660;</span>
+    </div>
+    <div id="apiBody" style="max-height:0;overflow:hidden;transition:max-height 0.3s ease,opacity 0.3s ease;opacity:0;">
+      <div style="padding:0 16px 14px;">
+        <div class="row">
+          <input type="password" class="api-input" id="apiKey" placeholder="sk-ant-...">
+          <button class="btn-sm" id="saveBtn" onclick="saveKey()">Speichern</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SETTINGS CARD -->
+
+  <div class="card" style="padding:0;overflow:hidden;">
+    <div onclick="toggleSettingsCard()" style="display:flex;justify-content:space-between;align-items:center;padding:12px 16px;cursor:pointer;user-select:none;-webkit-user-select:none;">
+      <span style="font-size:12px;color:var(--muted);">&#9881;&#65039; Einstellungen</span>
+      <span id="settingsChevron" style="font-size:11px;color:var(--muted);transition:transform 0.25s;display:inline-block;">&#9660;</span>
+    </div>
+    <div id="settingsBody" style="max-height:0;overflow:hidden;transition:max-height 0.35s ease,opacity 0.35s ease;opacity:0;">
+      <div style="padding:0 16px 16px;">
+        <div class="settings-grid">
+          <!-- Correction style -->
+          <div class="settings-item">
+            <div class="settings-label">Korrekturstil</div>
+            <select class="settings-select" id="corrStyle">
+              <option value="neutral">Neutral</option>
+              <option value="formell">Formell</option>
+              <option value="informell">Informell</option>
+              <option value="buero">Büro / Business</option>
+              <option value="medizin">Medizin</option>
+              <option value="legal">Juristisch</option>
+            </select>
+          </div>
+          <!-- Voice speed -->
+          <div class="settings-item">
+            <div class="settings-label">Vorlesgeschwindigkeit</div>
+            <input type="range" id="ttsSpeed" min="0.5" max="2.0" step="0.1" value="0.95"
+              oninput="document.getElementById('ttsSpeedVal').textContent=parseFloat(this.value).toFixed(1)+'x'">
+            <div class="speed-display" id="ttsSpeedVal">0.9x</div>
+          </div>
+        </div>
+        <!-- Custom prompt addition -->
+        <div style="margin-top:12px;">
+          <div class="settings-label">Zusatz-Anweisung (optional)</div>
+          <textarea id="customPrompt" class="manual-textarea" style="min-height:60px;margin-top:4px;" placeholder="z.B. Fachbegriffe nicht verändern, Du-Form beibehalten…"></textarea>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SEGMENTS CARD -->
+
+  <div class="card" id="segCard">
+    <div class="seg-hdr" onclick="toggleSegBody()">
+      <div class="seg-hdr-left">
+        <div class="lbl" style="margin:0">Aufnahme-Bausteine</div>
+        <div class="seg-cnt" id="segCnt">0</div>
+      </div>
+      <span class="seg-toggle" id="segToggle">&#9660;</span>
+    </div>
+    <div class="seg-body" id="segBody">
+      <div class="seg-list" id="segList">
+        <div class="empty"><div class="empty-ico">&#127908;</div><span>Noch keine Bausteine</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- LIVE TRANSCRIPTION BOX -->
+
+  <div class="live-box" id="liveBox">
+    <span id="liveFinal"></span><span class="live-interim" id="liveInterim"></span>
+  </div>
+
+  <!-- REC BAR -->
+
+  <div class="rec-bar" id="recBar">
+    <div class="wave"><div class="wb"></div><div class="wb"></div><div class="wb"></div><div class="wb"></div><div class="wb"></div></div>
+    <div class="rec-lbl">Aufnahme l&auml;uft&hellip;</div>
+    <div class="rec-time" id="recTime">0:00</div>
+  </div>
+
+  <!-- PTT + LANG -->
+
+  <div class="ptt-wrap">
+    <div style="width:100%;margin-bottom:4px;">
+      <div class="lbl" style="text-align:center;margin-bottom:6px;">&#127908; Diktatsprache</div>
+      <select class="lang-select" id="inputLangSelect" style="width:100%;">
+        <optgroup label="Europa">
+          <option value="de-DE">&#127465;&#127466; Deutsch</option>
+          <option value="en-US">&#127468;&#127463; Englisch</option>
+          <option value="fr-FR">&#127467;&#127479; Franz&ouml;sisch</option>
+          <option value="es-ES">&#127466;&#127480; Spanisch</option>
+          <option value="it-IT">&#127470;&#127481; Italienisch</option>
+          <option value="pt-PT">&#127477;&#127481; Portugiesisch</option>
+          <option value="nl-NL">&#127475;&#127473; Niederl&auml;ndisch</option>
+          <option value="pl-PL">&#127477;&#127473; Polnisch</option>
+          <option value="ru-RU">&#127479;&#127482; Russisch</option>
+          <option value="uk-UA">&#127482;&#127462; Ukrainisch</option>
+          <option value="sv-SE">&#127480;&#127466; Schwedisch</option>
+          <option value="nb-NO">&#127475;&#127476; Norwegisch</option>
+          <option value="da-DK">&#127465;&#127472; D&auml;nisch</option>
+          <option value="fi-FI">&#127467;&#127470; Finnisch</option>
+          <option value="el-GR">&#127468;&#127479; Griechisch</option>
+          <option value="ro-RO">&#127479;&#127476; Rum&auml;nisch</option>
+          <option value="cs-CZ">&#127464;&#127487; Tschechisch</option>
+          <option value="hu-HU">&#127469;&#127482; Ungarisch</option>
+        </optgroup>
+        <optgroup label="Naher Osten">
+          <option value="ar-SA">&#127480;&#127462; Arabisch</option>
+          <option value="tr-TR">&#127481;&#127479; T&uuml;rkisch</option>
+          <option value="fa-IR">&#127470;&#127479; Persisch</option>
+          <option value="he-IL">&#127470;&#127473; Hebr&auml;isch</option>
+        </optgroup>
+        <optgroup label="Asien">
+          <option value="zh-CN">&#127464;&#127475; Chinesisch (Vereinfacht)</option>
+          <option value="zh-TW">&#127481;&#127484; Chinesisch (Traditionell)</option>
+          <option value="ja-JP">&#127471;&#127477; Japanisch</option>
+          <option value="ko-KR">&#127472;&#127479; Koreanisch</option>
+          <option value="hi-IN">&#127470;&#127475; Hindi</option>
+          <option value="vi-VN">&#127483;&#127475; Vietnamesisch</option>
+          <option value="th-TH">&#127481;&#127469; Thail&auml;ndisch</option>
+          <option value="id-ID">&#127470;&#127465; Indonesisch</option>
+        </optgroup>
+      </select>
+    </div>
+    <div class="ptt-hint">HALTEN = Push-to-Talk &nbsp;|&nbsp; TIPPEN = Freihand</div>
+    <div class="ptt-buttons">
+      <button class="ptt disabled" id="ptt"
+        onmousedown="startRec(event)" onmouseup="stopRec(event)" onmouseleave="stopRec(event)"
+        ontouchstart="startRec(event)" ontouchend="stopRec(event)" ontouchcancel="stopRec(event)">
+        <span class="ptt-ico">&#127908;</span>
+        <span id="pttLbl">HALTEN</span>
+      </button>
+      <button class="ptt-toggle disabled" id="pttToggle" onclick="toggleRec()">
+        <span class="ptt-ico" id="toggleIco">&#128308;</span>
+        <span id="toggleLbl">START</span>
+      </button>
+    </div>
+
+```
+<!-- MANUAL TEXT INPUT -->
+<div class="manual-input-wrap">
+  <button class="manual-input-toggle" onclick="toggleManualInput()">&#9997; Text manuell eingeben</button>
+  <div class="manual-input-box" id="manualInputBox">
+    <textarea class="manual-textarea" id="manualTextarea" placeholder="Text hier eintippen und als Baustein hinzuf&uuml;gen…" rows="4"></textarea>
+    <button class="btn-manual-add" onclick="addManualSegment()">&#43; Als Baustein hinzuf&uuml;gen</button>
+  </div>
+</div>
+```
+
+  </div>
+
+  <!-- FINISH / CLEAR -->
+
+  <div class="actions">
+    <button class="btn-finish" id="finBtn" onclick="finish()" disabled>&#10022; Fertigstellen &amp; Korrigieren</button>
+    <button class="btn-clear" onclick="clearAll()">&#10005;</button>
+  </div>
+
+  <!-- LIVE TRANSLATE BUTTON -->
+
+<button onclick="showLiveTranslator()" style="width:100%;background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:13px;color:var(--text);font-family:'DM Mono',monospace;font-size:13px;font-weight:500;cursor:pointer;margin-bottom:12px;">🌐 Direkt übersetzen</button>
+
+  <!-- RESULT CARD -->
+
+  <div class="card hidden" id="resCard">
+    <div class="lbl">Korrigierter Text</div>
+    <div class="res-text" id="resText"></div>
+    <div class="res-acts">
+      <button class="res-btn" onclick="copyText()">&#128203; Kopieren</button>
+      <button class="btn-speak" id="speakBtn" onclick="toggleSpeak()">&#128266; <span id="speakLabel">Vorlesen</span></button>
+      <button class="res-btn" onclick="doMail()">&#9993;&#65039; E-Mail</button>
+      <button class="res-btn" onclick="doTxt()">&#128221; TXT</button>
+    </div>
+    <div class="section-divider"></div>
+    <div class="lbl" style="margin-top:8px;">&#127760; &Uuml;bersetzen</div>
+    <div style="display:flex;flex-direction:column;gap:8px;margin-top:8px;">
+      <select class="lang-select" id="langSelect">
+        <optgroup label="Europa">
+          <option value="Deutsch">&#127465;&#127466; Deutsch</option>
+          <option value="Englisch">&#127468;&#127463; Englisch</option>
+          <option value="Franz&ouml;sisch">&#127467;&#127479; Franz&ouml;sisch</option>
+          <option value="Spanisch">&#127466;&#127480; Spanisch</option>
+          <option value="Italienisch">&#127470;&#127481; Italienisch</option>
+          <option value="Portugiesisch">&#127477;&#127481; Portugiesisch</option>
+          <option value="Niederl&auml;ndisch">&#127475;&#127473; Niederl&auml;ndisch</option>
+          <option value="Polnisch">&#127477;&#127473; Polnisch</option>
+          <option value="Russisch">&#127479;&#127482; Russisch</option>
+          <option value="Ukrainisch">&#127482;&#127462; Ukrainisch</option>
+          <option value="Schwedisch">&#127480;&#127466; Schwedisch</option>
+          <option value="Norwegisch">&#127475;&#127476; Norwegisch</option>
+          <option value="D&auml;nisch">&#127465;&#127472; D&auml;nisch</option>
+          <option value="Finnisch">&#127467;&#127470; Finnisch</option>
+          <option value="Griechisch">&#127468;&#127479; Griechisch</option>
+          <option value="Rum&auml;nisch">&#127479;&#127476; Rum&auml;nisch</option>
+          <option value="Tschechisch">&#127464;&#127487; Tschechisch</option>
+          <option value="Ungarisch">&#127469;&#127482; Ungarisch</option>
+        </optgroup>
+        <optgroup label="Naher Osten">
+          <option value="Arabisch">&#127480;&#127462; Arabisch</option>
+          <option value="T&uuml;rkisch">&#127481;&#127479; T&uuml;rkisch</option>
+          <option value="Persisch">&#127470;&#127479; Persisch</option>
+          <option value="Hebr&auml;isch">&#127470;&#127473; Hebr&auml;isch</option>
+        </optgroup>
+        <optgroup label="Asien">
+          <option value="Chinesisch vereinfacht">&#127464;&#127475; Chinesisch (Vereinfacht)</option>
+          <option value="Chinesisch traditionell">&#127481;&#127484; Chinesisch (Traditionell)</option>
+          <option value="Japanisch">&#127471;&#127477; Japanisch</option>
+          <option value="Koreanisch">&#127472;&#127479; Koreanisch</option>
+          <option value="Hindi">&#127470;&#127475; Hindi</option>
+          <option value="Vietnamesisch">&#127483;&#127475; Vietnamesisch</option>
+          <option value="Thail&auml;ndisch">&#127481;&#127469; Thail&auml;ndisch</option>
+          <option value="Indonesisch">&#127470;&#127465; Indonesisch</option>
+        </optgroup>
+      </select>
+      <button class="btn-translate" id="translateBtn" onclick="doTranslate()" style="width:100%;padding:12px;">&#127760; &Uuml;bersetzen</button>
+    </div>
+  </div>
+
+  <!-- LIVE TRANSLATOR PANEL -->
+
+  <div id="liveTransPanel" style="display:none;">
+    <div class="card">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+        <div class="lbl" style="margin:0;">&#127760; Direkt &uuml;bersetzen</div>
+        <button onclick="hideLiveTranslator()" style="background:none;border:none;color:var(--muted);font-size:18px;cursor:pointer;padding:0 4px;">&#10005;</button>
+      </div>
+
+```
+  <!-- AUTO-DETECT BADGE -->
+  <div class="lt-auto-badge" id="ltAutoBadge">&#127760; Sprache wird automatisch erkannt</div>
+
+  <!-- SOURCE LANG -->
+  <div class="lbl" style="margin-top:6px;">Ausgangssprache</div>
+  <select class="lang-select" id="ltSrcLang" style="width:100%;margin-bottom:10px;" onchange="ltSrcLangChanged()">
+    <option value="auto" data-name="Automatisch">&#127760; Automatisch erkennen</option>
+    <optgroup label="Europa">
+      <option value="de-DE" data-name="Deutsch">&#127465;&#127466; Deutsch</option>
+      <option value="en-US" data-name="Englisch">&#127468;&#127463; Englisch</option>
+      <option value="fr-FR" data-name="Franz&ouml;sisch">&#127467;&#127479; Franz&ouml;sisch</option>
+      <option value="es-ES" data-name="Spanisch">&#127466;&#127480; Spanisch</option>
+      <option value="it-IT" data-name="Italienisch">&#127470;&#127481; Italienisch</option>
+      <option value="pt-PT" data-name="Portugiesisch">&#127477;&#127481; Portugiesisch</option>
+      <option value="nl-NL" data-name="Niederl&auml;ndisch">&#127475;&#127473; Niederl&auml;ndisch</option>
+      <option value="pl-PL" data-name="Polnisch">&#127477;&#127473; Polnisch</option>
+      <option value="ru-RU" data-name="Russisch">&#127479;&#127482; Russisch</option>
+      <option value="uk-UA" data-name="Ukrainisch">&#127482;&#127462; Ukrainisch</option>
+      <option value="sv-SE" data-name="Schwedisch">&#127480;&#127466; Schwedisch</option>
+      <option value="nb-NO" data-name="Norwegisch">&#127475;&#127476; Norwegisch</option>
+      <option value="da-DK" data-name="D&auml;nisch">&#127465;&#127472; D&auml;nisch</option>
+      <option value="fi-FI" data-name="Finnisch">&#127467;&#127470; Finnisch</option>
+      <option value="el-GR" data-name="Griechisch">&#127468;&#127479; Griechisch</option>
+      <option value="ro-RO" data-name="Rum&auml;nisch">&#127479;&#127476; Rum&auml;nisch</option>
+      <option value="cs-CZ" data-name="Tschechisch">&#127464;&#127487; Tschechisch</option>
+      <option value="hu-HU" data-name="Ungarisch">&#127469;&#127482; Ungarisch</option>
+    </optgroup>
+    <optgroup label="Naher Osten">
+      <option value="ar-SA" data-name="Arabisch">&#127480;&#127462; Arabisch</option>
+      <option value="tr-TR" data-name="T&uuml;rkisch">&#127481;&#127479; T&uuml;rkisch</option>
+      <option value="fa-IR" data-name="Persisch">&#127470;&#127479; Persisch</option>
+      <option value="he-IL" data-name="Hebr&auml;isch">&#127470;&#127473; Hebr&auml;isch</option>
+    </optgroup>
+    <optgroup label="Asien">
+      <option value="zh-CN" data-name="Chinesisch vereinfacht">&#127464;&#127475; Chinesisch (Vereinfacht)</option>
+      <option value="zh-TW" data-name="Chinesisch traditionell">&#127481;&#127484; Chinesisch (Traditionell)</option>
+      <option value="ja-JP" data-name="Japanisch">&#127471;&#127477; Japanisch</option>
+      <option value="ko-KR" data-name="Koreanisch">&#127472;&#127479; Koreanisch</option>
+      <option value="hi-IN" data-name="Hindi">&#127470;&#127475; Hindi</option>
+      <option value="vi-VN" data-name="Vietnamesisch">&#127483;&#127475; Vietnamesisch</option>
+      <option value="th-TH" data-name="Thail&auml;ndisch">&#127481;&#127469; Thail&auml;ndisch</option>
+      <option value="id-ID" data-name="Indonesisch">&#127470;&#127465; Indonesisch</option>
+    </optgroup>
+  </select>
+
+  <!-- SOURCE INPUT BOX (text + mic) -->
+  <div style="position:relative;margin-bottom:8px;">
+    <div class="lt-box" id="ltSrcBox">
+      <textarea id="ltSrcTextarea" class="lt-box-input" placeholder="Tippe hier oder nutze das Mikrofon&#8230;" oninput="ltTextareaChanged()" rows="3"></textarea>
+    </div>
+    <button id="ltMicBtn" onclick="toggleLtMic()" style="position:absolute;right:8px;top:8px;width:32px;height:32px;border-radius:50%;background:var(--accent);border:none;color:#fff;font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;">&#127908;</button>
+  </div>
+  <button class="lt-speak-btn" id="ltSrcSpeakBtn" onclick="speakLt('src')">&#128266; Ausgangstext vorlesen</button>
+
+  <!-- SWAP -->
+  <div style="text-align:center;margin:10px 0;">
+    <button onclick="swapLtLangs()" title="Sprachen tauschen" style="background:var(--surface2);border:1px solid var(--border);border-radius:50%;width:38px;height:38px;font-size:18px;cursor:pointer;color:var(--accent);display:inline-flex;align-items:center;justify-content:center;">&#8645;</button>
+  </div>
+
+  <!-- TARGET LANG -->
+  <div class="lbl">Zielsprache (Deutsch voreingestellt)</div>
+  <select class="lang-select" id="ltTgtLang" style="width:100%;margin-bottom:10px;">
+    <optgroup label="Europa">
+      <option value="de-DE" data-name="Deutsch" selected>&#127465;&#127466; Deutsch</option>
+      <option value="en-US" data-name="Englisch">&#127468;&#127463; Englisch</option>
+      <option value="fr-FR" data-name="Franz&ouml;sisch">&#127467;&#127479; Franz&ouml;sisch</option>
+      <option value="es-ES" data-name="Spanisch">&#127466;&#127480; Spanisch</option>
+      <option value="it-IT" data-name="Italienisch">&#127470;&#127481; Italienisch</option>
+      <option value="pt-PT" data-name="Portugiesisch">&#127477;&#127481; Portugiesisch</option>
+      <option value="nl-NL" data-name="Niederl&auml;ndisch">&#127475;&#127473; Niederl&auml;ndisch</option>
+      <option value="pl-PL" data-name="Polnisch">&#127477;&#127473; Polnisch</option>
+      <option value="ru-RU" data-name="Russisch">&#127479;&#127482; Russisch</option>
+      <option value="uk-UA" data-name="Ukrainisch">&#127482;&#127462; Ukrainisch</option>
+      <option value="sv-SE" data-name="Schwedisch">&#127480;&#127466; Schwedisch</option>
+      <option value="nb-NO" data-name="Norwegisch">&#127475;&#127476; Norwegisch</option>
+      <option value="da-DK" data-name="D&auml;nisch">&#127465;&#127472; D&auml;nisch</option>
+      <option value="fi-FI" data-name="Finnisch">&#127467;&#127470; Finnisch</option>
+      <option value="el-GR" data-name="Griechisch">&#127468;&#127479; Griechisch</option>
+      <option value="ro-RO" data-name="Rum&auml;nisch">&#127479;&#127476; Rum&auml;nisch</option>
+      <option value="cs-CZ" data-name="Tschechisch">&#127464;&#127487; Tschechisch</option>
+      <option value="hu-HU" data-name="Ungarisch">&#127469;&#127482; Ungarisch</option>
+    </optgroup>
+    <optgroup label="Naher Osten">
+      <option value="ar-SA" data-name="Arabisch">&#127480;&#127462; Arabisch</option>
+      <option value="tr-TR" data-name="T&uuml;rkisch">&#127481;&#127479; T&uuml;rkisch</option>
+      <option value="fa-IR" data-name="Persisch">&#127470;&#127479; Persisch</option>
+      <option value="he-IL" data-name="Hebr&auml;isch">&#127470;&#127473; Hebr&auml;isch</option>
+    </optgroup>
+    <optgroup label="Asien">
+      <option value="zh-CN" data-name="Chinesisch vereinfacht">&#127464;&#127475; Chinesisch (Vereinfacht)</option>
+      <option value="zh-TW" data-name="Chinesisch traditionell">&#127481;&#127484; Chinesisch (Traditionell)</option>
+      <option value="ja-JP" data-name="Japanisch">&#127471;&#127477; Japanisch</option>
+      <option value="ko-KR" data-name="Koreanisch">&#127472;&#127479; Koreanisch</option>
+      <option value="hi-IN" data-name="Hindi">&#127470;&#127475; Hindi</option>
+      <option value="vi-VN" data-name="Vietnamesisch">&#127483;&#127475; Vietnamesisch</option>
+      <option value="th-TH" data-name="Thail&auml;ndisch">&#127481;&#127469; Thail&auml;ndisch</option>
+      <option value="id-ID" data-name="Indonesisch">&#127470;&#127465; Indonesisch</option>
+    </optgroup>
+  </select>
+
+  <!-- TRANSLATION OUTPUT -->
+  <div class="lt-box" id="ltTgtBox" style="margin-bottom:8px;">
+    <span id="ltTgtText" style="color:var(--muted);">&Uuml;bersetzung erscheint hier&hellip;</span>
+  </div>
+  <button class="lt-speak-btn" id="ltTgtSpeakBtn" onclick="speakLt('tgt')">&#128266; &Uuml;bersetzung vorlesen</button>
+  <button onclick="copyLtResult()" style="margin-top:6px;width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:10px;color:var(--text);font-family:'DM Mono',monospace;font-size:12px;cursor:pointer;">&#128203; &Uuml;bersetzung kopieren</button>
+</div>
+```
+
+  </div>
+
+</div><!-- /.app -->
+<div class="toast" id="toast"></div>
+
+<!-- ══════════════════════════════════════════════════════════
+     JAVASCRIPT
+══════════════════════════════════════════════════════════ -->
+
+<script>
+// ── THEME CSS STRINGS ──────────────────────────────────────
+var DARK_CSS = "body{--bg:#0a0a0f;--surface:#12121a;--surface2:#1a1a26;--border:#2a2a3d;--text:#e8e8f0;--muted:#666680;--rec:#ff3c5a;--rec-glow:rgba(255,60,90,0.3);--ok:#00e5a0;--ok-glow:rgba(0,229,160,0.25);--accent:#7b5cff;--shadow:rgba(0,0,0,0.5);--grad:rgba(123,92,255,0.12);}*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}html{height:100%;}body{min-height:100%;font-family:'DM Mono',monospace;background-color:var(--bg);color:var(--text);}body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellipse 80% 50% at 50% -10%,var(--grad),transparent);pointer-events:none;z-index:0;}.app{max-width:480px;margin:0 auto;padding:20px 16px 80px;position:relative;z-index:1;}header{display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;}.logo{font-weight:500;font-size:16px;color:var(--text);}.logo span{color:var(--rec);}.header-right{display:flex;align-items:center;gap:8px;}.theme-btn{background:var(--surface);border:1px solid var(--border);border-radius:20px;padding:5px 10px;cursor:pointer;font-size:16px;line-height:1;color:var(--text);}.chip{display:flex;align-items:center;gap:6px;background:var(--surface);border:1px solid var(--border);border-radius:20px;padding:5px 12px;font-size:11px;color:var(--text);}.dot{width:7px;height:7px;border-radius:50%;background:var(--muted);flex-shrink:0;transition:all 0.3s;}.dot.rec{background:var(--rec);box-shadow:0 0 8px var(--rec-glow);animation:pulse 1s infinite;}.dot.ok{background:var(--ok);}@keyframes pulse{0%,100%{opacity:1}50%{opacity:0.4}}.mic-banner{background:rgba(123,92,255,0.12);border:1px solid rgba(123,92,255,0.4);border-radius:12px;padding:14px 16px;margin-bottom:12px;display:flex;align-items:center;gap:12px;}.mic-banner.hidden{display:none;}.mic-banner-txt{flex:1;font-size:12px;line-height:1.5;color:var(--text);}.mic-banner-txt b{color:var(--accent);}.btn-mic{background:var(--accent);border:none;border-radius:10px;padding:10px 14px;color:#fff;font-family:'DM Mono',monospace;font-size:12px;font-weight:500;cursor:pointer;}.card{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:16px;margin-bottom:12px;box-shadow:0 2px 12px var(--shadow);}.lbl{font-size:10px;font-weight:500;letter-spacing:0.12em;color:var(--muted);margin-bottom:10px;text-transform:uppercase;}.row{display:flex;gap:8px;}.api-input{flex:1;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:10px 14px;color:var(--text);font-family:'DM Mono',monospace;font-size:13px;outline:none;}.api-input:focus{border-color:var(--accent);}.btn-sm{background:var(--accent);border:none;border-radius:10px;padding:10px 14px;color:#fff;font-family:'DM Mono',monospace;font-size:12px;cursor:pointer;}.btn-sm.saved{background:var(--ok);}.seg-hdr{display:flex;justify-content:space-between;align-items:center;cursor:pointer;user-select:none;-webkit-user-select:none;}.seg-hdr-left{display:flex;align-items:center;gap:8px;}.seg-toggle{font-size:12px;color:var(--muted);display:inline-block;transition:transform 0.25s;}.seg-toggle.open{transform:rotate(180deg);}.seg-cnt{font-size:11px;color:var(--muted);}.seg-body{overflow:hidden;max-height:0;opacity:0;transition:max-height 0.3s ease,opacity 0.3s ease;}.seg-body.open{max-height:1200px;opacity:1;}.seg-list{display:flex;flex-direction:column;gap:8px;padding-top:12px;}.empty{display:flex;flex-direction:column;align-items:center;justify-content:center;height:70px;gap:8px;color:var(--muted);font-size:12px;}.empty-ico{font-size:22px;opacity:0.4;}.seg-item{background:var(--surface2);border:1px solid var(--border);border-radius:10px;overflow:hidden;animation:slideIn 0.25s ease;}@keyframes slideIn{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:translateY(0)}}.seg-item-hdr{display:flex;align-items:center;gap:10px;padding:10px 14px;cursor:pointer;user-select:none;-webkit-user-select:none;}.seg-num{font-size:10px;color:var(--accent);font-weight:500;min-width:24px;}.seg-preview{font-size:12px;color:var(--muted);flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}.seg-chevron{font-size:11px;color:var(--muted);display:inline-block;transition:transform 0.2s;flex-shrink:0;}.seg-chevron.open{transform:rotate(180deg);}.seg-item-body{max-height:0;overflow:hidden;transition:max-height 0.3s ease;}.seg-item-body.open{max-height:500px;}.seg-item-content{padding:0 14px 12px;display:flex;flex-direction:column;gap:8px;}.seg-edit{width:100%;background:var(--bg);border:1px solid var(--accent);border-radius:8px;padding:10px;color:var(--text);font-family:'DM Mono',monospace;font-size:13px;line-height:1.6;resize:vertical;min-height:80px;outline:none;}.seg-edit:focus{border-color:var(--ok);}.seg-txt{font-size:13px;line-height:1.6;color:var(--text);padding:2px 0;}.seg-actions{display:flex;gap:6px;flex-wrap:wrap;}.seg-del,.seg-copy,.seg-save{background:none;border:1px solid var(--border);border-radius:7px;color:var(--muted);cursor:pointer;font-size:11px;padding:5px 10px;font-family:'DM Mono',monospace;}.seg-del:hover{border-color:var(--rec);color:var(--rec);}.seg-copy:hover{border-color:var(--accent);color:var(--accent);}.seg-save{border-color:var(--ok);color:var(--ok);}.seg-save:hover{background:rgba(0,229,160,0.1);}.live-box{background:rgba(123,92,255,0.08);border:1px solid rgba(123,92,255,0.25);border-radius:10px;padding:12px 14px;font-size:13px;color:var(--muted);line-height:1.5;margin-bottom:12px;display:none;min-height:44px;}.live-box.active{display:block;}.live-interim{opacity:0.5;}.rec-bar{background:rgba(255,60,90,0.08);border:1px solid rgba(255,60,90,0.25);border-radius:12px;padding:12px 16px;display:flex;align-items:center;gap:12px;margin-bottom:12px;opacity:0;transform:translateY(8px);transition:all 0.2s;}.rec-bar.on{opacity:1;transform:translateY(0);}.wave{display:flex;gap:3px;align-items:center;}.wb{width:3px;border-radius:2px;background:var(--rec);animation:wv 0.8s ease-in-out infinite;}.wb:nth-child(1){height:14px;}.wb:nth-child(2){height:20px;animation-delay:.1s;}.wb:nth-child(3){height:26px;animation-delay:.2s;}.wb:nth-child(4){height:20px;animation-delay:.3s;}.wb:nth-child(5){height:14px;animation-delay:.4s;}@keyframes wv{0%,100%{transform:scaleY(1)}50%{transform:scaleY(0.35)}}.rec-lbl{flex:1;font-size:12px;color:var(--rec);}.rec-time{font-size:13px;font-weight:500;color:var(--rec);font-variant-numeric:tabular-nums;}.ptt-wrap{display:flex;flex-direction:column;align-items:center;gap:16px;margin:4px 0 16px;}.ptt-hint{font-size:10px;color:var(--muted);letter-spacing:0.05em;text-align:center;}.ptt-buttons{display:flex;gap:24px;align-items:center;}.ptt,.ptt-toggle{border-radius:50%;background:var(--surface2);border:2px solid var(--border);cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;color:var(--text);font-family:'DM Mono',monospace;font-weight:500;letter-spacing:0.04em;user-select:none;-webkit-user-select:none;touch-action:none;box-shadow:0 4px 16px var(--shadow);transition:all 0.15s;}.ptt{width:100px;height:100px;font-size:10px;}.ptt-toggle{width:80px;height:80px;font-size:9px;}.ptt-ico{font-size:28px;}.ptt-toggle .ptt-ico{font-size:22px;}.ptt.on,.ptt-toggle.on{background:var(--rec);border-color:var(--rec);box-shadow:0 0 0 8px var(--rec-glow),0 0 30px var(--rec-glow);color:#fff;}.ptt.disabled,.ptt-toggle.disabled{opacity:0.35;pointer-events:none;}.manual-input-wrap{width:100%;margin-top:4px;}.manual-input-toggle{width:100%;background:none;border:1px dashed var(--border);border-radius:10px;padding:8px;color:var(--muted);font-family:'DM Mono',monospace;font-size:11px;cursor:pointer;transition:all 0.2s;}.manual-input-toggle:hover{border-color:var(--accent);color:var(--accent);}.manual-input-box{display:none;margin-top:8px;flex-direction:column;gap:8px;}.manual-input-box.open{display:flex;}.manual-textarea{width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:12px;color:var(--text);font-family:'DM Mono',monospace;font-size:13px;line-height:1.6;resize:none;min-height:90px;outline:none;}.manual-textarea:focus{border-color:var(--accent);}.btn-manual-add{background:var(--accent);border:none;border-radius:10px;padding:10px;color:#fff;font-family:'DM Mono',monospace;font-size:12px;font-weight:500;cursor:pointer;width:100%;}.actions{display:flex;gap:8px;margin-bottom:12px;}.btn-finish{flex:1;background:var(--ok);border:none;border-radius:12px;padding:14px;color:#fff;font-family:'DM Mono',monospace;font-size:13px;font-weight:500;cursor:pointer;transition:box-shadow 0.2s;}.btn-finish:disabled{background:var(--surface2);color:var(--muted);cursor:not-allowed;}.btn-clear{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:14px 18px;color:var(--muted);font-size:16px;cursor:pointer;}.settings-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:4px;}.settings-label{font-size:10px;color:var(--muted);letter-spacing:0.08em;text-transform:uppercase;margin-bottom:6px;}.settings-select{width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:9px 12px;color:var(--text);font-family:'DM Mono',monospace;font-size:12px;outline:none;cursor:pointer;appearance:none;-webkit-appearance:none;background-image:url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%23888' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E\");background-repeat:no-repeat;background-position:right 10px center;}.settings-select:focus{border-color:var(--accent);}.speed-display{font-size:13px;color:var(--accent);font-weight:500;text-align:center;margin-top:4px;}input[type=range]{width:100%;accent-color:var(--accent);cursor:pointer;margin-top:4px;}.hidden{display:none!important;}.res-text{background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:14px;font-size:13px;line-height:1.7;white-space:pre-wrap;margin-top:10px;max-height:260px;overflow-y:auto;color:var(--text);}.res-acts{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px;}.res-btn{background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:8px 12px;color:var(--text);font-family:'DM Mono',monospace;font-size:11px;cursor:pointer;}.btn-speak{background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:8px 12px;color:var(--text);font-family:'DM Mono',monospace;font-size:11px;cursor:pointer;display:inline-flex;align-items:center;gap:5px;}.btn-speak.speaking{background:rgba(0,229,160,0.15);border-color:var(--ok);color:var(--ok);animation:speakPulse 1.2s infinite;}@keyframes speakPulse{0%,100%{opacity:1}50%{opacity:0.6}}.lang-select{flex:1;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:10px 14px;color:var(--text);font-family:'DM Mono',monospace;font-size:12px;outline:none;cursor:pointer;appearance:none;-webkit-appearance:none;background-image:url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%23888' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E\");background-repeat:no-repeat;background-position:right 12px center;}.lang-select option{background:#1a1a26;color:#e8e8f0;}.btn-translate{background:var(--accent);border:none;border-radius:10px;padding:10px 16px;color:#fff;font-family:'DM Mono',monospace;font-size:12px;font-weight:500;cursor:pointer;}.btn-translate:disabled{opacity:0.4;cursor:not-allowed;}.lt-speak-btn{width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:8px;color:var(--text);font-family:'DM Mono',monospace;font-size:11px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;}.lt-speak-btn.speaking{color:var(--ok);border-color:var(--ok);animation:speakPulse 1.2s infinite;}.lt-box{background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:12px;min-height:80px;font-size:13px;line-height:1.6;color:var(--text);word-break:break-word;position:relative;}.lt-box-input{width:100%;background:transparent;border:none;outline:none;font-family:'DM Mono',monospace;font-size:13px;color:var(--text);line-height:1.6;resize:none;min-height:56px;}.lt-auto-badge{display:inline-flex;align-items:center;gap:4px;background:rgba(123,92,255,0.15);border:1px solid rgba(123,92,255,0.4);border-radius:20px;padding:3px 8px;font-size:10px;color:var(--accent);margin-bottom:8px;}.toast{position:fixed;bottom:30px;left:50%;transform:translateX(-50%) translateY(100px);background:var(--surface);border:1px solid var(--border);border-radius:40px;padding:10px 20px;font-size:12px;font-weight:500;z-index:999;white-space:nowrap;box-shadow:0 4px 20px var(--shadow);color:var(--text);transition:transform 0.3s;}.toast.show{transform:translateX(-50%) translateY(0);}.toast.ok{border-color:var(--ok);color:var(--ok);}.toast.err{border-color:var(--rec);color:var(--rec);}.section-divider{height:1px;background:var(--border);margin:4px 0 12px;opacity:0.5;}";
+
+var LIGHT_CSS = "body{--bg:#f2f2f7;--surface:#ffffff;--surface2:#e8e8f0;--border:#c8c8d8;--text:#111128;--muted:#888899;--rec:#d4001f;--rec-glow:rgba(212,0,31,0.2);--ok:#007a55;--ok-glow:rgba(0,122,85,0.2);--accent:#5535cc;--shadow:rgba(0,0,0,0.08);--grad:rgba(85,53,204,0.06);}*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}html{height:100%;}body{min-height:100%;font-family:'DM Mono',monospace;background-color:var(--bg);color:var(--text);}body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellipse 80% 50% at 50% -10%,var(--grad),transparent);pointer-events:none;z-index:0;}.app{max-width:480px;margin:0 auto;padding:20px 16px 80px;position:relative;z-index:1;}header{display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;}.logo{font-weight:500;font-size:16px;color:var(--text);}.logo span{color:var(--rec);}.header-right{display:flex;align-items:center;gap:8px;}.theme-btn{background:var(--surface);border:1px solid var(--border);border-radius:20px;padding:5px 10px;cursor:pointer;font-size:16px;line-height:1;color:var(--text);}.chip{display:flex;align-items:center;gap:6px;background:var(--surface);border:1px solid var(--border);border-radius:20px;padding:5px 12px;font-size:11px;color:var(--text);}.dot{width:7px;height:7px;border-radius:50%;background:var(--muted);flex-shrink:0;transition:all 0.3s;}.dot.rec{background:var(--rec);box-shadow:0 0 8px var(--rec-glow);animation:pulse 1s infinite;}.dot.ok{background:var(--ok);}@keyframes pulse{0%,100%{opacity:1}50%{opacity:0.4}}.mic-banner{background:rgba(123,92,255,0.12);border:1px solid rgba(123,92,255,0.4);border-radius:12px;padding:14px 16px;margin-bottom:12px;display:flex;align-items:center;gap:12px;}.mic-banner.hidden{display:none;}.mic-banner-txt{flex:1;font-size:12px;line-height:1.5;color:var(--text);}.mic-banner-txt b{color:var(--accent);}.btn-mic{background:var(--accent);border:none;border-radius:10px;padding:10px 14px;color:#fff;font-family:'DM Mono',monospace;font-size:12px;font-weight:500;cursor:pointer;}.card{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:16px;margin-bottom:12px;box-shadow:0 2px 12px var(--shadow);}.lbl{font-size:10px;font-weight:500;letter-spacing:0.12em;color:var(--muted);margin-bottom:10px;text-transform:uppercase;}.row{display:flex;gap:8px;}.api-input{flex:1;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:10px 14px;color:var(--text);font-family:'DM Mono',monospace;font-size:13px;outline:none;}.api-input:focus{border-color:var(--accent);}.btn-sm{background:var(--accent);border:none;border-radius:10px;padding:10px 14px;color:#fff;font-family:'DM Mono',monospace;font-size:12px;cursor:pointer;}.btn-sm.saved{background:var(--ok);}.seg-hdr{display:flex;justify-content:space-between;align-items:center;cursor:pointer;user-select:none;-webkit-user-select:none;}.seg-hdr-left{display:flex;align-items:center;gap:8px;}.seg-toggle{font-size:12px;color:var(--muted);display:inline-block;transition:transform 0.25s;}.seg-toggle.open{transform:rotate(180deg);}.seg-cnt{font-size:11px;color:var(--muted);}.seg-body{overflow:hidden;max-height:0;opacity:0;transition:max-height 0.3s ease,opacity 0.3s ease;}.seg-body.open{max-height:1200px;opacity:1;}.seg-list{display:flex;flex-direction:column;gap:8px;padding-top:12px;}.empty{display:flex;flex-direction:column;align-items:center;justify-content:center;height:70px;gap:8px;color:var(--muted);font-size:12px;}.empty-ico{font-size:22px;opacity:0.4;}.seg-item{background:var(--surface2);border:1px solid var(--border);border-radius:10px;overflow:hidden;animation:slideIn 0.25s ease;}@keyframes slideIn{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:translateY(0)}}.seg-item-hdr{display:flex;align-items:center;gap:10px;padding:10px 14px;cursor:pointer;user-select:none;-webkit-user-select:none;}.seg-num{font-size:10px;color:var(--accent);font-weight:500;min-width:24px;}.seg-preview{font-size:12px;color:var(--muted);flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}.seg-chevron{font-size:11px;color:var(--muted);display:inline-block;transition:transform 0.2s;flex-shrink:0;}.seg-chevron.open{transform:rotate(180deg);}.seg-item-body{max-height:0;overflow:hidden;transition:max-height 0.3s ease;}.seg-item-body.open{max-height:500px;}.seg-item-content{padding:0 14px 12px;display:flex;flex-direction:column;gap:8px;}.seg-edit{width:100%;background:var(--bg);border:1px solid var(--accent);border-radius:8px;padding:10px;color:var(--text);font-family:'DM Mono',monospace;font-size:13px;line-height:1.6;resize:vertical;min-height:80px;outline:none;}.seg-edit:focus{border-color:var(--ok);}.seg-txt{font-size:13px;line-height:1.6;color:var(--text);padding:2px 0;}.seg-actions{display:flex;gap:6px;flex-wrap:wrap;}.seg-del,.seg-copy,.seg-save{background:none;border:1px solid var(--border);border-radius:7px;color:var(--muted);cursor:pointer;font-size:11px;padding:5px 10px;font-family:'DM Mono',monospace;}.seg-del:hover{border-color:var(--rec);color:var(--rec);}.seg-copy:hover{border-color:var(--accent);color:var(--accent);}.seg-save{border-color:var(--ok);color:var(--ok);}.seg-save:hover{background:rgba(0,122,85,0.1);}.live-box{background:rgba(85,53,204,0.06);border:1px solid rgba(85,53,204,0.2);border-radius:10px;padding:12px 14px;font-size:13px;color:var(--muted);line-height:1.5;margin-bottom:12px;display:none;min-height:44px;}.live-box.active{display:block;}.live-interim{opacity:0.5;}.rec-bar{background:rgba(212,0,31,0.06);border:1px solid rgba(212,0,31,0.2);border-radius:12px;padding:12px 16px;display:flex;align-items:center;gap:12px;margin-bottom:12px;opacity:0;transform:translateY(8px);transition:all 0.2s;}.rec-bar.on{opacity:1;transform:translateY(0);}.wave{display:flex;gap:3px;align-items:center;}.wb{width:3px;border-radius:2px;background:var(--rec);animation:wv 0.8s ease-in-out infinite;}.wb:nth-child(1){height:14px;}.wb:nth-child(2){height:20px;animation-delay:.1s;}.wb:nth-child(3){height:26px;animation-delay:.2s;}.wb:nth-child(4){height:20px;animation-delay:.3s;}.wb:nth-child(5){height:14px;animation-delay:.4s;}@keyframes wv{0%,100%{transform:scaleY(1)}50%{transform:scaleY(0.35)}}.rec-lbl{flex:1;font-size:12px;color:var(--rec);}.rec-time{font-size:13px;font-weight:500;color:var(--rec);font-variant-numeric:tabular-nums;}.ptt-wrap{display:flex;flex-direction:column;align-items:center;gap:16px;margin:4px 0 16px;}.ptt-hint{font-size:10px;color:var(--muted);letter-spacing:0.05em;text-align:center;}.ptt-buttons{display:flex;gap:24px;align-items:center;}.ptt,.ptt-toggle{border-radius:50%;background:var(--surface2);border:2px solid var(--border);cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;color:var(--text);font-family:'DM Mono',monospace;font-weight:500;letter-spacing:0.04em;user-select:none;-webkit-user-select:none;touch-action:none;box-shadow:0 4px 16px var(--shadow);transition:all 0.15s;}.ptt{width:100px;height:100px;font-size:10px;}.ptt-toggle{width:80px;height:80px;font-size:9px;}.ptt-ico{font-size:28px;}.ptt-toggle .ptt-ico{font-size:22px;}.ptt.on,.ptt-toggle.on{background:var(--rec);border-color:var(--rec);box-shadow:0 0 0 8px var(--rec-glow),0 0 30px var(--rec-glow);color:#fff;}.ptt.disabled,.ptt-toggle.disabled{opacity:0.35;pointer-events:none;}.manual-input-wrap{width:100%;margin-top:4px;}.manual-input-toggle{width:100%;background:none;border:1px dashed var(--border);border-radius:10px;padding:8px;color:var(--muted);font-family:'DM Mono',monospace;font-size:11px;cursor:pointer;transition:all 0.2s;}.manual-input-toggle:hover{border-color:var(--accent);color:var(--accent);}.manual-input-box{display:none;margin-top:8px;flex-direction:column;gap:8px;}.manual-input-box.open{display:flex;}.manual-textarea{width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:12px;color:var(--text);font-family:'DM Mono',monospace;font-size:13px;line-height:1.6;resize:none;min-height:90px;outline:none;}.manual-textarea:focus{border-color:var(--accent);}.btn-manual-add{background:var(--accent);border:none;border-radius:10px;padding:10px;color:#fff;font-family:'DM Mono',monospace;font-size:12px;font-weight:500;cursor:pointer;width:100%;}.actions{display:flex;gap:8px;margin-bottom:12px;}.btn-finish{flex:1;background:var(--ok);border:none;border-radius:12px;padding:14px;color:#fff;font-family:'DM Mono',monospace;font-size:13px;font-weight:500;cursor:pointer;transition:box-shadow 0.2s;}.btn-finish:disabled{background:var(--surface2);color:var(--muted);cursor:not-allowed;}.btn-clear{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:14px 18px;color:var(--muted);font-size:16px;cursor:pointer;}.settings-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:4px;}.settings-label{font-size:10px;color:var(--muted);letter-spacing:0.08em;text-transform:uppercase;margin-bottom:6px;}.settings-select{width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:9px 12px;color:var(--text);font-family:'DM Mono',monospace;font-size:12px;outline:none;cursor:pointer;appearance:none;-webkit-appearance:none;background-image:url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%23888' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E\");background-repeat:no-repeat;background-position:right 10px center;}.settings-select:focus{border-color:var(--accent);}.speed-display{font-size:13px;color:var(--accent);font-weight:500;text-align:center;margin-top:4px;}input[type=range]{width:100%;accent-color:var(--accent);cursor:pointer;margin-top:4px;}.hidden{display:none!important;}.res-text{background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:14px;font-size:13px;line-height:1.7;white-space:pre-wrap;margin-top:10px;max-height:260px;overflow-y:auto;color:var(--text);}.res-acts{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px;}.res-btn{background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:8px 12px;color:var(--text);font-family:'DM Mono',monospace;font-size:11px;cursor:pointer;}.btn-speak{background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:8px 12px;color:var(--text);font-family:'DM Mono',monospace;font-size:11px;cursor:pointer;display:inline-flex;align-items:center;gap:5px;}.btn-speak.speaking{background:rgba(0,122,85,0.15);border-color:var(--ok);color:var(--ok);animation:speakPulse 1.2s infinite;}@keyframes speakPulse{0%,100%{opacity:1}50%{opacity:0.6}}.lang-select{flex:1;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:10px 14px;color:var(--text);font-family:'DM Mono',monospace;font-size:12px;outline:none;cursor:pointer;appearance:none;-webkit-appearance:none;background-image:url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%23888' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E\");background-repeat:no-repeat;background-position:right 12px center;}.lang-select option{background:#e8e8f0;color:#111128;}.btn-translate{background:var(--accent);border:none;border-radius:10px;padding:10px 16px;color:#fff;font-family:'DM Mono',monospace;font-size:12px;font-weight:500;cursor:pointer;}.btn-translate:disabled{opacity:0.4;cursor:not-allowed;}.lt-speak-btn{width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:8px;color:var(--text);font-family:'DM Mono',monospace;font-size:11px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;}.lt-speak-btn.speaking{color:var(--ok);border-color:var(--ok);animation:speakPulse 1.2s infinite;}.lt-box{background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:12px;min-height:80px;font-size:13px;line-height:1.6;color:var(--text);word-break:break-word;position:relative;}.lt-box-input{width:100%;background:transparent;border:none;outline:none;font-family:'DM Mono',monospace;font-size:13px;color:var(--text);line-height:1.6;resize:none;min-height:56px;}.lt-auto-badge{display:inline-flex;align-items:center;gap:4px;background:rgba(85,53,204,0.12);border:1px solid rgba(85,53,204,0.35);border-radius:20px;padding:3px 8px;font-size:10px;color:var(--accent);margin-bottom:8px;}.toast{position:fixed;bottom:30px;left:50%;transform:translateX(-50%) translateY(100px);background:var(--surface);border:1px solid var(--border);border-radius:40px;padding:10px 20px;font-size:12px;font-weight:500;z-index:999;white-space:nowrap;box-shadow:0 4px 20px var(--shadow);color:var(--text);transition:transform 0.3s;}.toast.show{transform:translateX(-50%) translateY(0);}.toast.ok{border-color:var(--ok);color:var(--ok);}.toast.err{border-color:var(--rec);color:var(--rec);}.section-divider{height:1px;background:var(--border);margin:4px 0 12px;opacity:0.5;}";
+
+// ── THEME ──────────────────────────────────────────────────
+var isDark = true;
+function applyTheme(t) {
+  isDark = (t === 'dark');
+  document.getElementById('main-style').textContent = isDark ? DARK_CSS : LIGHT_CSS;
+  document.getElementById('themeBtn').textContent = isDark ? '\u2600\uFE0F' : '\uD83C\uDF19';
+  document.getElementById('themeColor').content = isDark ? '#0a0a0f' : '#f2f2f7';
+}
+function toggleTheme() {
+  var n = isDark ? 'light' : 'dark';
+  applyTheme(n);
+  try { localStorage.setItem('dk_theme', n); } catch(e) {}
+}
+
+// ── STATE ──────────────────────────────────────────────────
+var segs = [], isRec = false, apiKey = '', corrected = '';
+var recognition = null, accFinals = '';
+var timerInt = null, timerSecs = 0;
+var micStream = null, micGranted = false;
+var segBodyOpen = false, openSegIndex = -1;
+var isSpeaking = false, toggleMode = false;
+
+// ── INIT ───────────────────────────────────────────────────
+window.addEventListener('DOMContentLoaded', function() {
+  var savedTheme = 'dark';
+  try { savedTheme = localStorage.getItem('dk_theme') || 'dark'; } catch(e) {}
+  applyTheme(savedTheme);
+
+  // Init speed display
+  var spd = document.getElementById('ttsSpeed');
+  document.getElementById('ttsSpeedVal').textContent = parseFloat(spd.value).toFixed(1) + 'x';
+
+  try {
+    var k = localStorage.getItem('dk_api');
+    if (k) {
+      apiKey = k;
+      document.getElementById('apiKey').value = k;
+    } else {
+      var ab = document.getElementById('apiBody'), ac = document.getElementById('apiChevron');
+      ab.style.maxHeight = '200px'; ab.style.opacity = '1';
+      ac.style.transform = 'rotate(180deg)';
+    }
+    var cs = localStorage.getItem('dk_corrStyle');
+    if (cs) document.getElementById('corrStyle').value = cs;
+    var ts = localStorage.getItem('dk_ttsSpeed');
+    if (ts) { document.getElementById('ttsSpeed').value = ts; document.getElementById('ttsSpeedVal').textContent = parseFloat(ts).toFixed(1) + 'x'; }
+  } catch(e) {}
+
+  var SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!SR) {
+    document.getElementById('micBanner').innerHTML = '<div class="mic-banner-txt" style="color:var(--rec)">Bitte Chrome oder Safari verwenden.</div>';
+    return;
+  }
+  if (navigator.permissions) {
+    navigator.permissions.query({name:'microphone'}).then(function(r) {
+      if (r.state === 'granted') acquireMic(true);
+    }).catch(function(){});
+  }
+});
+
+// ── SETTINGS ───────────────────────────────────────────────
+function toggleSettingsCard() {
+  var body = document.getElementById('settingsBody');
+  var chev = document.getElementById('settingsChevron');
+  var isOpen = body.style.maxHeight && body.style.maxHeight !== '0px';
+  if (isOpen) {
+    body.style.maxHeight = '0px'; body.style.opacity = '0';
+    chev.style.transform = 'rotate(0deg)';
+    // save settings on close
+    try {
+      localStorage.setItem('dk_corrStyle', document.getElementById('corrStyle').value);
+      localStorage.setItem('dk_ttsSpeed', document.getElementById('ttsSpeed').value);
+    } catch(e) {}
+  } else {
+    body.style.maxHeight = '400px'; body.style.opacity = '1';
+    chev.style.transform = 'rotate(180deg)';
+  }
+}
+
+// ── MIC ────────────────────────────────────────────────────
+function requestMic() {
+  document.querySelector('#micBanner .btn-mic').textContent = '...';
+  acquireMic(false);
+}
+function acquireMic(silent) {
+  navigator.mediaDevices.getUserMedia({audio:true}).then(function(stream) {
+    micStream = stream; micGranted = true;
+    document.getElementById('micBanner').classList.add('hidden');
+    document.getElementById('ptt').classList.remove('disabled');
+    document.getElementById('pttToggle').classList.remove('disabled');
+    setStatus('ok', 'Bereit');
+    if (!silent) toast('Mikrofon bereit', 'ok');
+  }).catch(function() {
+    document.querySelector('#micBanner .btn-mic').textContent = 'Erlauben';
+    toast('Mikrofon verweigert', 'err');
+  });
+}
+
+// ── API KEY ─────────────────────────────────────────────────
+function toggleApiCard() {
+  var body = document.getElementById('apiBody'), chev = document.getElementById('apiChevron');
+  var isOpen = body.style.maxHeight && body.style.maxHeight !== '0px';
+  if (isOpen) { body.style.maxHeight='0px'; body.style.opacity='0'; chev.style.transform='rotate(0deg)'; }
+  else { body.style.maxHeight='200px'; body.style.opacity='1'; chev.style.transform='rotate(180deg)'; }
+}
+function saveKey() {
+  var v = document.getElementById('apiKey').value.trim();
+  if (!v) { toast('Kein Schluessel', 'err'); return; }
+  apiKey = v;
+  try { localStorage.setItem('dk_api', v); } catch(e) {}
+  var b = document.getElementById('saveBtn');
+  b.textContent = 'OK'; b.classList.add('saved');
+  setTimeout(function(){ b.textContent='Speichern'; b.classList.remove('saved'); }, 2000);
+  toast('Gespeichert', 'ok');
+  var body = document.getElementById('apiBody'), chev = document.getElementById('apiChevron');
+  body.style.maxHeight='0px'; body.style.opacity='0'; chev.style.transform='rotate(0deg)';
+}
+
+// ── MANUAL TEXT INPUT ──────────────────────────────────────
+function toggleManualInput() {
+  var box = document.getElementById('manualInputBox');
+  box.classList.toggle('open');
+}
+function addManualSegment() {
+  var ta = document.getElementById('manualTextarea');
+  var text = ta.value.trim();
+  if (!text) { toast('Kein Text eingegeben', 'err'); return; }
+  segs.push(text);
+  openSegIndex = segs.length - 1;
+  segBodyOpen = true;
+  renderSegs();
+  document.getElementById('segBody').classList.add('open');
+  document.getElementById('segToggle').classList.add('open');
+  document.getElementById('finBtn').disabled = false;
+  ta.value = '';
+  document.getElementById('manualInputBox').classList.remove('open');
+  toast('Baustein ' + segs.length + ' hinzugefuegt', 'ok');
+}
+
+// ── RECORDING ──────────────────────────────────────────────
+function toggleRec() {
+  if (!micGranted) return;
+  if (isRec && toggleMode) { toggleMode = false; stopRecCore(); }
+  else if (!isRec) { toggleMode = true; startRecCore(); }
+}
+function startRec(e) {
+  e.preventDefault();
+  if (isRec || !micGranted) return;
+  toggleMode = false; startRecCore();
+}
+function stopRec(e) {
+  e.preventDefault();
+  if (!isRec || toggleMode) return;
+  stopRecCore();
+}
+function startRecCore() {
+  var SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!SR) return;
+  recognition = new SR();
+  recognition.lang = document.getElementById('inputLangSelect').value || 'de-DE';
+  recognition.continuous = true;
+  recognition.interimResults = true;
+  recognition.maxAlternatives = 1;
+  accFinals = '';
+
+  recognition.onresult = function(e) {
+    var interim = '';
+    for (var i = e.resultIndex; i < e.results.length; i++) {
+      if (e.results[i].isFinal) accFinals += e.results[i][0].transcript;
+      else interim += e.results[i][0].transcript;
+    }
+    document.getElementById('liveFinal').textContent = accFinals;
+    document.getElementById('liveInterim').textContent = interim ? ' ' + interim : '';
+  };
+  recognition.onerror = function(ev) {
+    if (ev.error === 'not-allowed') {
+      micGranted = false;
+      document.getElementById('micBanner').classList.remove('hidden');
+      document.getElementById('ptt').classList.add('disabled');
+      document.getElementById('pttToggle').classList.add('disabled');
+      resetUI(); isRec = false; toggleMode = false;
+    }
+  };
+  recognition.onend = function() {
+    if (!isRec) { finalizeSeg(); }
+    else { try { recognition.start(); } catch(e2) {} }
+  };
+  try { recognition.start(); } catch(e) { toast('Start fehlgeschlagen', 'err'); return; }
+
+  isRec = true;
+  document.getElementById('ptt').classList.add('on');
+  document.getElementById('pttLbl').textContent = 'STOP';
+  document.getElementById('pttToggle').classList.add('on');
+  document.getElementById('toggleIco').textContent = '\u23F9';
+  document.getElementById('toggleLbl').textContent = 'STOP';
+  document.getElementById('recBar').classList.add('on');
+  document.getElementById('liveBox').classList.add('active');
+  document.getElementById('liveFinal').textContent = '';
+  document.getElementById('liveInterim').textContent = '';
+  setStatus('rec', 'REC');
+  timerSecs = 0;
+  document.getElementById('recTime').textContent = '0:00';
+  timerInt = setInterval(function() {
+    timerSecs++;
+    var m = Math.floor(timerSecs/60), s = timerSecs % 60;
+    document.getElementById('recTime').textContent = m + ':' + (s<10?'0':'') + s;
+  }, 1000);
+}
+function stopRecCore() {
+  if (!isRec) return;
+  isRec = false;
+  clearInterval(timerInt);
+  resetUI();
+  setStatus('', 'Verarbeite...');
+  try { recognition.stop(); } catch(e) { finalizeSeg(); }
+}
+function resetUI() {
+  document.getElementById('ptt').classList.remove('on');
+  document.getElementById('pttLbl').textContent = 'HALTEN';
+  document.getElementById('pttToggle').classList.remove('on');
+  document.getElementById('toggleIco').textContent = '\uD83D\uDD34';
+  document.getElementById('toggleLbl').textContent = 'START';
+  document.getElementById('recBar').classList.remove('on');
+}
+function finalizeSeg() {
+  var text = accFinals.trim();
+  document.getElementById('liveBox').classList.remove('active');
+  document.getElementById('liveFinal').textContent = '';
+  document.getElementById('liveInterim').textContent = '';
+  if (text.length > 1) {
+    segs.push(text);
+    openSegIndex = segs.length - 1;
+    segBodyOpen = true;
+    renderSegs();
+    document.getElementById('segBody').classList.add('open');
+    document.getElementById('segToggle').classList.add('open');
+    document.getElementById('finBtn').disabled = false;
+    toast('Baustein ' + segs.length + ' gespeichert', 'ok');
+    setStatus('ok', 'Bereit');
+  } else {
+    toast('Nichts erkannt', 'err');
+    setStatus('', 'Bereit');
+  }
+  accFinals = ''; recognition = null; toggleMode = false;
+}
+
+// ── SEGMENTS ───────────────────────────────────────────────
+function toggleSegBody() {
+  segBodyOpen = !segBodyOpen;
+  document.getElementById('segBody').classList.toggle('open', segBodyOpen);
+  document.getElementById('segToggle').classList.toggle('open', segBodyOpen);
+}
+function toggleSegItem(i) {
+  openSegIndex = (openSegIndex === i) ? -1 : i;
+  renderSegs();
+  if (!segBodyOpen && openSegIndex >= 0) {
+    segBodyOpen = true;
+    document.getElementById('segBody').classList.add('open');
+    document.getElementById('segToggle').classList.add('open');
+  }
+}
+function saveSeg(i) {
+  var ta = document.getElementById('segEdit_' + i);
+  if (!ta) return;
+  var val = ta.value.trim();
+  if (!val) { toast('Baustein darf nicht leer sein', 'err'); return; }
+  segs[i] = val;
+  renderSegs();
+  toast('Gespeichert', 'ok');
+}
+function renderSegs() {
+  var l = document.getElementById('segList');
+  l.innerHTML = '';
+  document.getElementById('segCnt').textContent = segs.length;
+  if (!segs.length) {
+    l.innerHTML = '<div class="empty"><div class="empty-ico">&#127908;</div><span>Noch keine Bausteine</span></div>';
+    return;
+  }
+  segs.forEach(function(t, i) {
+    var isOpen = (openSegIndex === i);
+    var preview = t.length > 42 ? t.substring(0, 42) + '...' : t;
+    var el = document.createElement('div');
+    el.className = 'seg-item';
+    el.innerHTML =
+      '<div class="seg-item-hdr" onclick="toggleSegItem(' + i + ')">' +
+        '<div class="seg-num">#' + (i+1) + '</div>' +
+        '<div class="seg-preview">' + esc(preview) + '</div>' +
+        '<span class="seg-chevron' + (isOpen?' open':'') + '">&#9660;</span>' +
+      '</div>' +
+      '<div class="seg-item-body' + (isOpen?' open':'') + '">' +
+        '<div class="seg-item-content">' +
+          '<textarea id="segEdit_' + i + '" class="seg-edit">' + esc(t) + '</textarea>' +
+
+```
+      '<div class="seg-actions">' +
+        '<button class="seg-save" onclick="saveSeg(' + i + ')">&#10003; Speichern</button>' +
+        '<button class="seg-copy" onclick="copySegment(' + i + ')">Kopieren</button>' +
+        '<button class="seg-del" onclick="delSeg(' + i + ')">L&ouml;schen</button>' +
+      '</div>' +
+    '</div>' +
+  '</div>';
+l.appendChild(el);
+```
+
+});
+}
+function copySegment(i) { navigator.clipboard.writeText(segs[i]).then(function(){ toast(‘Kopiert’, ‘ok’); }); }
+function delSeg(i) {
+segs.splice(i, 1);
+if (openSegIndex >= segs.length) openSegIndex = segs.length - 1;
+renderSegs();
+if (!segs.length) document.getElementById(‘finBtn’).disabled = true;
+}
+
+// ── FINISH ─────────────────────────────────────────────────
+function finish() {
+if (!segs.length || !apiKey) { if (!apiKey) toast(‘Bitte API-Schluessel eingeben’, ‘err’); return; }
+var combined = segs.join(’ ’);
+var btn = document.getElementById(‘finBtn’);
+btn.disabled = true; btn.textContent = ‘Korrigiere…’;
+
+var style = document.getElementById(‘corrStyle’).value;
+var styleMap = {
+neutral: ‘neutralem, klaren Stil’,
+formell: ‘formellem, höflichem Stil (Sie-Form)’,
+informell: ‘informellem, lockerem Stil (Du-Form)’,
+buero: ‘professionellem Büro-/Business-Stil’,
+medizin: ‘medizinisch-fachlichem Stil (Fachbegriffe erhalten)’,
+legal: ‘juristisch-präzisem Stil (Fachbegriffe erhalten)’
+};
+var styleTxt = styleMap[style] || ‘neutralem Stil’;
+var inputLangEl = document.getElementById(‘inputLangSelect’);
+var langName = inputLangEl.options[inputLangEl.selectedIndex].text.replace(/^.+\s/, ‘’);
+var customP = (document.getElementById(‘customPrompt’).value || ‘’).trim();
+var extraInstr = customP ? ’\n6. Zusatz-Anweisung des Nutzers: ’ + customP : ‘’;
+
+fetch(‘https://api.anthropic.com/v1/messages’, {
+method:‘POST’,
+headers:{‘Content-Type’:‘application/json’,‘x-api-key’:apiKey,‘anthropic-version’:‘2023-06-01’,‘anthropic-dangerous-direct-browser-access’:‘true’},
+body: JSON.stringify({
+model:‘claude-sonnet-4-20250514’, max_tokens:2000,
+messages:[{role:‘user’, content:
+’Du korrigierst einen diktierten Text. Sprache: ’ + langName + ’. Stil: ’ + styleTxt + ‘.\n\n’ +
+‘Deine Aufgaben:\n’ +
+‘1. Grammatik, Rechtschreibung und Zeichensetzung korrigieren.\n’ +
+‘2. Text sinnvoll in Absaetze gliedern.\n’ +
+‘3. Woerter die durch Versprecher oder Erkennungsfehler offensichtlich nicht zum Sinn passen in eckige Klammern setzen, z.B. [unklar].\n’ +
+‘4. Inhalt vollstaendig erhalten, nichts weglassen oder hinzufuegen.\n’ +
+‘5. NUR den korrigierten Text zurueckgeben, keine Erklaerungen.’ +
+extraInstr + ‘\n\nText:\n\n’ + combined
+}]
+})
+}).then(function(r) {
+if (!r.ok) throw new Error(’HTTP ’ + r.status);
+return r.json();
+}).then(function(d) {
+corrected = (d.content && d.content[0] && d.content[0].text) ? d.content[0].text.trim() : combined;
+document.getElementById(‘resText’).textContent = corrected;
+document.getElementById(‘resCard’).classList.remove(‘hidden’);
+document.getElementById(‘resCard’).scrollIntoView({behavior:‘smooth’,block:‘start’});
+toast(‘Text korrigiert’, ‘ok’);
+}).catch(function(err) {
+toast(’Fehler: ’ + err.message, ‘err’);
+}).finally(function() {
+btn.disabled = false; btn.textContent = ‘\u2736 Fertigstellen & Korrigieren’;
+});
+}
+
+// ── TRANSLATE ──────────────────────────────────────────────
+function doTranslate() {
+if (!corrected) return;
+var lang = document.getElementById(‘langSelect’).value;
+if (!lang) return;
+var btn = document.getElementById(‘translateBtn’);
+btn.disabled = true; btn.textContent = ‘…’;
+fetch(‘https://api.anthropic.com/v1/messages’, {
+method:‘POST’,
+headers:{‘Content-Type’:‘application/json’,‘x-api-key’:apiKey,‘anthropic-version’:‘2023-06-01’,‘anthropic-dangerous-direct-browser-access’:‘true’},
+body: JSON.stringify({
+model:‘claude-sonnet-4-20250514’, max_tokens:2000,
+messages:[{role:‘user’,content:‘Uebersetze den folgenden Text ins ’ + lang + ‘. Gib NUR die Uebersetzung zurueck:\n\n’ + corrected}]
+})
+}).then(function(r){ return r.json(); })
+.then(function(d){
+document.getElementById(‘resText’).textContent = (d.content && d.content[0] && d.content[0].text) ? d.content[0].text.trim() : ‘’;
+toast(‘Uebersetzt’, ‘ok’);
+}).catch(function(){ toast(‘Uebersetzung fehlgeschlagen’, ‘err’); })
+.finally(function(){ btn.disabled=false; btn.textContent=’\u{1F310} \u00DCbersetzen’; });
+}
+
+// ── TTS ────────────────────────────────────────────────────
+var langCodeMap = {
+‘Deutsch’:‘de-DE’,‘Englisch’:‘en-US’,‘Französisch’:‘fr-FR’,‘Spanisch’:‘es-ES’,
+‘Italienisch’:‘it-IT’,‘Portugiesisch’:‘pt-PT’,‘Brasilianisches Portugiesisch’:‘pt-BR’,
+‘Niederländisch’:‘nl-NL’,‘Polnisch’:‘pl-PL’,‘Russisch’:‘ru-RU’,‘Ukrainisch’:‘uk-UA’,
+‘Schwedisch’:‘sv-SE’,‘Norwegisch’:‘nb-NO’,‘Dänisch’:‘da-DK’,‘Finnisch’:‘fi-FI’,
+‘Griechisch’:‘el-GR’,‘Rumänisch’:‘ro-RO’,‘Tschechisch’:‘cs-CZ’,‘Ungarisch’:‘hu-HU’,
+‘Arabisch’:‘ar-SA’,‘Türkisch’:‘tr-TR’,‘Persisch’:‘fa-IR’,‘Hebräisch’:‘he-IL’,
+‘Chinesisch vereinfacht’:‘zh-CN’,‘Chinesisch traditionell’:‘zh-TW’,
+‘Japanisch’:‘ja-JP’,‘Koreanisch’:‘ko-KR’,‘Hindi’:‘hi-IN’,‘Vietnamesisch’:‘vi-VN’,
+‘Thailändisch’:‘th-TH’,‘Indonesisch’:‘id-ID’
+};
+function toggleSpeak() {
+if (isSpeaking) { stopSpeak(); return; }
+var text = document.getElementById(‘resText’).textContent.trim();
+if (!text) { toast(‘Kein Text’, ‘err’); return; }
+if (!window.speechSynthesis) { toast(‘Nicht unterstuetzt’, ‘err’); return; }
+var lang = document.getElementById(‘langSelect’).value || ‘Deutsch’;
+var code = langCodeMap[lang] || ‘de-DE’;
+var speed = parseFloat(document.getElementById(‘ttsSpeed’).value) || 0.95;
+var utt = new SpeechSynthesisUtterance(text);
+utt.lang = code; utt.rate = speed;
+var voices = window.speechSynthesis.getVoices();
+var match = voices.find(function(v){ return v.lang.startsWith(code.split(’-’)[0]); });
+if (match) utt.voice = match;
+utt.onstart = function() {
+isSpeaking = true;
+document.getElementById(‘speakBtn’).classList.add(‘speaking’);
+document.getElementById(‘speakLabel’).textContent = ‘Stop’;
+};
+utt.onend = utt.onerror = function() {
+isSpeaking = false;
+document.getElementById(‘speakBtn’).classList.remove(‘speaking’);
+document.getElementById(‘speakLabel’).textContent = ‘Vorlesen’;
+};
+window.speechSynthesis.cancel();
+window.speechSynthesis.speak(utt);
+}
+function stopSpeak() {
+window.speechSynthesis.cancel();
+isSpeaking = false;
+document.getElementById(‘speakBtn’).classList.remove(‘speaking’);
+document.getElementById(‘speakLabel’).textContent = ‘Vorlesen’;
+}
+
+// ── LIVE TRANSLATOR ────────────────────────────────────────
+var ltRec = null, ltIsRec = false, ltFinalText = ‘’, ltTransTimer = null, ltDetectedLang = ‘’;
+
+function showLiveTranslator() {
+document.getElementById(‘liveTransPanel’).style.display = ‘block’;
+document.getElementById(‘ltTgtLang’).value = ‘de-DE’;
+document.getElementById(‘liveTransPanel’).scrollIntoView({behavior:‘smooth’,block:‘start’});
+}
+function hideLiveTranslator() {
+stopLtMic();
+document.getElementById(‘liveTransPanel’).style.display = ‘none’;
+}
+function ltSrcLangChanged() {
+var val = document.getElementById(‘ltSrcLang’).value;
+var badge = document.getElementById(‘ltAutoBadge’);
+badge.style.display = (val === ‘auto’) ? ‘inline-flex’ : ‘none’;
+}
+
+function toggleLtMic() {
+if (ltIsRec) { stopLtMic(); } else { startLtMic(); }
+}
+
+function startLtMic() {
+if (!micGranted) { toast(‘Bitte erst Mikrofon erlauben’, ‘err’); return; }
+var SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+if (!SR) { toast(‘Spracherkennung nicht verfuegbar’, ‘err’); return; }
+var srcVal = document.getElementById(‘ltSrcLang’).value;
+ltRec = new SR();
+// If auto, use browser default (usually detects reasonably)
+ltRec.lang = (srcVal === ‘auto’) ? ‘’ : srcVal;
+ltRec.continuous = true;
+ltRec.interimResults = true;
+ltFinalText = ‘’;
+var ta = document.getElementById(‘ltSrcTextarea’);
+ta.value = ‘’;
+ta.placeholder = ‘Spreche jetzt…’;
+
+ltRec.onresult = function(e) {
+var interim = ‘’;
+var newFinal = ‘’;
+for (var i = e.resultIndex; i < e.results.length; i++) {
+if (e.results[i].isFinal) newFinal += e.results[i][0].transcript;
+else interim += e.results[i][0].transcript;
+}
+if (newFinal) {
+ltFinalText += newFinal;
+ta.value = ltFinalText;
+}
+if (interim) ta.value = ltFinalText + ’ ’ + interim;
+if (newFinal) {
+clearTimeout(ltTransTimer);
+ltTransTimer = setTimeout(function(){ runLtTranslation(ltFinalText); }, 600);
+}
+};
+ltRec.onerror = function(ev) {
+if (ev.error !== ‘no-speech’ && ev.error !== ‘aborted’) { toast(’Fehler: ’ + ev.error, ‘err’); stopLtMic(); }
+};
+ltRec.onend = function() {
+if (ltIsRec) { try { ltRec.start(); } catch(e2) {} }
+};
+try { ltRec.start(); } catch(e) { toast(‘Mikrofon-Start fehlgeschlagen’, ‘err’); return; }
+
+ltIsRec = true;
+var btn = document.getElementById(‘ltMicBtn’);
+btn.textContent = ‘⏹’;
+btn.style.background = ‘var(–rec)’;
+}
+function stopLtMic() {
+ltIsRec = false;
+if (ltRec) { try { ltRec.stop(); } catch(e) {} ltRec = null; }
+var btn = document.getElementById(‘ltMicBtn’);
+btn.textContent = ‘🎤’;
+btn.style.background = ‘var(–accent)’;
+var ta = document.getElementById(‘ltSrcTextarea’);
+if (!ta.value) ta.placeholder = ‘Tippe hier oder nutze das Mikrofon\u2026’;
+}
+function ltTextareaChanged() {
+// Trigger translation on typing (debounced)
+var text = document.getElementById(‘ltSrcTextarea’).value.trim();
+if (!text) return;
+clearTimeout(ltTransTimer);
+ltTransTimer = setTimeout(function(){ runLtTranslation(text); }, 900);
+}
+
+function runLtTranslation(text) {
+if (!text.trim() || !apiKey) return;
+var srcSel = document.getElementById(‘ltSrcLang’);
+var tgtSel = document.getElementById(‘ltTgtLang’);
+var srcVal = srcSel.value;
+var srcName = srcVal === ‘auto’ ? ‘automatisch erkannter Sprache’ : (srcSel.options[srcSel.selectedIndex].getAttribute(‘data-name’) || ‘Deutsch’);
+var tgtName = tgtSel.options[tgtSel.selectedIndex].getAttribute(‘data-name’) || ‘Deutsch’;
+
+var tgtEl = document.getElementById(‘ltTgtText’);
+tgtEl.textContent = ‘\u23F3 \u00DCbersetze\u2026’;
+tgtEl.style.color = ‘var(–muted)’;
+
+var prompt = srcVal === ‘auto’
+? ’Erkenne die Sprache des folgenden Textes und uebersetze ihn ins ’ + tgtName + ‘. Gib NUR die Uebersetzung zurueck, ohne Erklaerungen:\n\n’ + text
+: ’Uebersetze den folgenden Text von ’ + srcName + ’ nach ’ + tgtName + ‘. Gib NUR die Uebersetzung zurueck:\n\n’ + text;
+
+fetch(‘https://api.anthropic.com/v1/messages’, {
+method:‘POST’,
+headers:{‘Content-Type’:‘application/json’,‘x-api-key’:apiKey,‘anthropic-version’:‘2023-06-01’,‘anthropic-dangerous-direct-browser-access’:‘true’},
+body: JSON.stringify({model:‘claude-sonnet-4-20250514’,max_tokens:1000,messages:[{role:‘user’,content:prompt}]})
+}).then(function(r){ return r.json(); })
+.then(function(d){
+var result = (d.content && d.content[0] && d.content[0].text) ? d.content[0].text.trim() : ‘’;
+tgtEl.textContent = result || ‘Keine \u00DCbersetzung’;
+tgtEl.style.color = ‘var(–text)’;
+}).catch(function(){
+tgtEl.textContent = ‘Fehler bei der \u00DCbersetzung’;
+tgtEl.style.color = ‘var(–rec)’;
+});
+}
+
+function copyLtResult() {
+var text = document.getElementById(‘ltTgtText’).textContent;
+if (text && text !== ‘\u00DCbersetzung erscheint hier\u2026’ && text !== ‘\u23F3 \u00DCbersetze\u2026’) {
+navigator.clipboard.writeText(text).then(function(){ toast(‘Kopiert’, ‘ok’); });
+}
+}
+function swapLtLangs() {
+var src = document.getElementById(‘ltSrcLang’), tgt = document.getElementById(‘ltTgtLang’);
+var tmp = src.value;
+// Don’t swap if src is ‘auto’
+if (tmp === ‘auto’) { toast(‘Bitte zuerst eine Sprache auswaehlen’, ‘err’); return; }
+src.value = tgt.value; tgt.value = tmp;
+ltSrcLangChanged();
+stopLtMic();
+ltFinalText = ‘’;
+document.getElementById(‘ltSrcTextarea’).value = ‘’;
+document.getElementById(‘ltTgtText’).textContent = ‘\u00DCbersetzung erscheint hier\u2026’;
+document.getElementById(‘ltTgtText’).style.color = ‘var(–muted)’;
+toast(‘Sprachen getauscht’, ‘ok’);
+}
+
+function speakLt(which) {
+var text, langCode, btn;
+if (which === ‘src’) {
+text = document.getElementById(‘ltSrcTextarea’).value.trim();
+var srcSel = document.getElementById(‘ltSrcLang’);
+langCode = srcSel.value === ‘auto’ ? ‘de-DE’ : srcSel.value;
+btn = document.getElementById(‘ltSrcSpeakBtn’);
+} else {
+text = document.getElementById(‘ltTgtText’).textContent.trim();
+langCode = document.getElementById(‘ltTgtLang’).value;
+btn = document.getElementById(‘ltTgtSpeakBtn’);
+}
+if (!text || text === ‘\u00DCbersetzung erscheint hier\u2026’ || text === ‘\u23F3 \u00DCbersetze\u2026’) {
+toast(‘Kein Text zum Vorlesen’, ‘err’); return;
+}
+window.speechSynthesis.cancel();
+[‘ltSrcSpeakBtn’,‘ltTgtSpeakBtn’].forEach(function(id){
+var b = document.getElementById(id);
+if (b) b.classList.remove(‘speaking’);
+});
+var speed = parseFloat(document.getElementById(‘ttsSpeed’).value) || 0.95;
+var utt = new SpeechSynthesisUtterance(text);
+utt.lang = langCode; utt.rate = speed;
+btn.classList.add(‘speaking’);
+utt.onend = utt.onerror = function(){ btn.classList.remove(‘speaking’); };
+window.speechSynthesis.speak(utt);
+}
+
+// ── HELPERS ────────────────────────────────────────────────
+function clearAll() {
+segs = []; corrected = ‘’; openSegIndex = -1; segBodyOpen = false;
+renderSegs();
+document.getElementById(‘segBody’).classList.remove(‘open’);
+document.getElementById(‘segToggle’).classList.remove(‘open’);
+document.getElementById(‘finBtn’).disabled = true;
+document.getElementById(‘resCard’).classList.add(‘hidden’);
+document.getElementById(‘resText’).textContent = ‘’;
+setStatus(’’, ‘Bereit’);
+}
+function copyText() { navigator.clipboard.writeText(document.getElementById(‘resText’).textContent).then(function(){ toast(‘Kopiert’, ‘ok’); }); }
+function doMail() { window.location.href = ‘mailto:?subject=Diktat&body=’ + encodeURIComponent(document.getElementById(‘resText’).textContent); }
+function doTxt() {
+var a = document.createElement(‘a’);
+a.href = ‘data:text/plain;charset=utf-8,’ + encodeURIComponent(document.getElementById(‘resText’).textContent);
+a.download = ‘diktat.txt’; a.click();
+}
+function setStatus(type, text) {
+document.getElementById(‘dot’).className = ‘dot’ + (type ? ’ ’ + type : ‘’);
+document.getElementById(‘stxt’).textContent = text;
+}
+function esc(s) { return s.replace(/&/g,’&’).replace(/</g,’<’).replace(/>/g,’>’); }
+var toastT;
+function toast(msg, type) {
+var el = document.getElementById(‘toast’);
+el.textContent = msg;
+el.className = ‘toast show’ + (type ? ’ ’ + type : ‘’);
+clearTimeout(toastT);
+toastT = setTimeout(function(){ el.className=‘toast’; }, 3000);
+}
+</script>
+
+</body>
+</html>
