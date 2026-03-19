@@ -975,6 +975,26 @@ body.has-sticky-recorder .sticky-recorder .manual-add-btn{
     font-size: 12px !important;
   }
 }
+/* ── Neues vertikales Gesprächsmodus-Layout ── */
+.conv-v-box{border-radius:18px;padding:14px;margin-bottom:10px;border:1.5px solid;}
+.conv-v-box-a{background:rgba(123,92,255,0.07);border-color:rgba(123,92,255,0.45);}
+.conv-v-box-b{background:rgba(0,229,160,0.06);border-color:rgba(0,229,160,0.40);margin-bottom:0;}
+.conv-v-header{display:flex;align-items:center;gap:10px;margin-bottom:10px;}
+.conv-v-label{font-size:11px;font-weight:600;letter-spacing:0.12em;text-transform:uppercase;}
+.conv-v-label-a{color:var(--accent);}
+.conv-v-label-b{color:var(--ok);}
+.conv-v-status{font-size:10px;color:var(--muted);}
+.conv-v-lang{font-size:12px;background:var(--bg);border:1px solid var(--border);border-radius:8px;color:var(--text);padding:5px 8px;width:100%;font-family:'DM Mono',monospace;margin-top:4px;appearance:none;-webkit-appearance:none;}
+.conv-v-recbtn{width:54px;height:54px;border-radius:50%;border:2px solid var(--border);background:var(--surface2);cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all 0.2s;}
+.conv-v-recbtn.active{background:var(--rec);border-color:var(--rec);box-shadow:0 0 0 8px var(--rec-glow);}
+.conv-v-recdot{width:16px;height:16px;border-radius:50%;background:var(--rec);display:block;transition:all 0.2s;}
+.conv-v-recbtn.active .conv-v-recdot{background:#fff;border-radius:3px;width:12px;height:12px;}
+.conv-v-body{display:flex;flex-direction:column;gap:6px;}
+.conv-v-spoken{min-height:48px;background:rgba(0,0,0,0.18);border:1px solid var(--border);border-radius:10px;padding:10px 12px;font-size:15px;line-height:1.55;color:var(--text);}
+.conv-v-spoken:empty::before{content:'…';color:var(--muted);}
+.conv-v-arrow{font-size:10px;text-transform:uppercase;letter-spacing:0.08em;color:var(--muted);padding-left:2px;}
+.conv-v-translated{min-height:48px;background:rgba(0,0,0,0.1);border:1px solid rgba(255,255,255,0.06);border-radius:10px;padding:10px 12px;font-size:15px;line-height:1.55;color:var(--text);}
+.conv-v-translated:empty::before{content:'…';color:var(--muted);}
 </style>
 
 </head>
@@ -1386,209 +1406,173 @@ body.has-sticky-recorder .sticky-recorder .manual-add-btn{
   
 <!-- CONVERSATION MODE PANEL -->
 <div id="convPanel" style="display:none;">
-<div class="card">
+<div class="card" style="padding:12px 12px 14px;">
 
-<div class="conv-top-clean">
-  <div style="display:flex;align-items:center;gap:8px;">
-    <div class="lbl" style="margin:0;">🗣 Gesprächsmodus</div>
-    <span id="convHistCnt" style="font-size:11px;color:var(--muted);background:var(--bg);border:1px solid var(--border);border-radius:999px;padding:2px 8px;min-width:20px;text-align:center;">0</span>
-  </div>
-  <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;">
-    <button class="res-btn" onclick="clearConversationHistory()" title="Gespräch zurücksetzen">🗑 Reset</button>
-    <button class="res-btn" onclick="exportConversationTxt()" title="Als TXT exportieren">💾 Export</button>
-    <button class="res-btn" id="convFacingBtn" onclick="toggleConvFacing()" title="Modus für gegenübersitzende Personen">⤢ Gegenüber</button>
-    <button class="res-btn" onclick="toggleConversationFullscreen()">⛶</button>
-    <button onclick="hideConversationMode()" style="background:none;border:none;color:var(--muted);font-size:18px;cursor:pointer;line-height:1;">✕</button>
+<!-- Top Bar -->
+<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+  <div style="font-size:11px;letter-spacing:0.12em;text-transform:uppercase;font-weight:600;color:var(--accent);">🗣 Gesprächsmodus</div>
+  <div style="display:flex;gap:8px;align-items:center;">
+    <label style="display:flex;align-items:center;gap:5px;font-size:11px;color:var(--muted);cursor:pointer;">
+      <input type="checkbox" id="convAutoSpeak" style="accent-color:var(--accent);width:13px;height:13px;">🔊
+    </label>
+    <button class="res-btn" onclick="clearConversationHistory()" title="Alles löschen">↺</button>
+    <button onclick="hideConversationMode()" style="background:none;border:none;color:var(--muted);font-size:20px;cursor:pointer;line-height:1;padding:0 2px;">✕</button>
   </div>
 </div>
 
-<!-- Optionen -->
-<div style="display:flex;gap:16px;align-items:center;flex-wrap:wrap;padding:8px 12px;background:var(--surface2);border:1px solid var(--border);border-radius:10px;margin-bottom:12px;">
-  <label style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--muted);cursor:pointer;">
-    <input type="checkbox" id="convAutoSpeak" style="accent-color:var(--accent);width:14px;height:14px;">
-    🔊 Auto-Vorlesen
-  </label>
-  <label style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--muted);cursor:pointer;">
-    <input type="checkbox" id="convAutoFlip" style="accent-color:var(--accent);width:14px;height:14px;">
-    🔄 Auto-Wechsel
-  </label>
-</div>
+<!-- Versteckte Elemente für JS-Kompatibilität -->
+<input type="checkbox" id="convAutoFlip" style="display:none;">
+<span id="convHistCnt" style="display:none;">0</span>
+<span id="convChipA" style="display:none;"></span>
+<span id="convChipB" style="display:none;"></span>
+<div id="convHistory" style="display:none;"></div>
 
-<!-- Sprachauswahl (außerhalb der Panels – kein Rotations-Problem) -->
-<div style="display:flex;gap:8px;margin-bottom:14px;align-items:center;">
-  <select id="convLangA" class="lang-select" style="flex:1;" onchange="updateConversationChips()">
-    <optgroup label="Europa">
-      <option value="Deutsch" selected>🇩🇪 Deutsch</option>
-      <option value="Englisch">🇬🇧 Englisch</option>
-      <option value="Französisch">🇫🇷 Französisch</option>
-      <option value="Spanisch">🇪🇸 Spanisch</option>
-      <option value="Italienisch">🇮🇹 Italienisch</option>
-      <option value="Portugiesisch">🇵🇹 Portugiesisch</option>
-      <option value="Niederländisch">🇳🇱 Niederländisch</option>
-      <option value="Polnisch">🇵🇱 Polnisch</option>
-      <option value="Russisch">🇷🇺 Russisch</option>
-      <option value="Ukrainisch">🇺🇦 Ukrainisch</option>
-      <option value="Schwedisch">🇸🇪 Schwedisch</option>
-      <option value="Norwegisch">🇳🇴 Norwegisch</option>
-      <option value="Dänisch">🇩🇰 Dänisch</option>
-      <option value="Finnisch">🇫🇮 Finnisch</option>
-      <option value="Griechisch">🇬🇷 Griechisch</option>
-      <option value="Rumänisch">🇷🇴 Rumänisch</option>
-      <option value="Tschechisch">🇨🇿 Tschechisch</option>
-      <option value="Ungarisch">🇭🇺 Ungarisch</option>
-      <option value="Albanisch">🇦🇱 Albanisch</option>
-      <option value="Kroatisch">🇭🇷 Kroatisch</option>
-      <option value="Serbisch">🇷🇸 Serbisch</option>
-      <option value="Slowakisch">🇸🇰 Slowakisch</option>
-      <option value="Bulgarisch">🇧🇬 Bulgarisch</option>
-    </optgroup>
-    <optgroup label="Naher Osten">
-      <option value="Arabisch">🇸🇦 Arabisch</option>
-      <option value="Türkisch">🇹🇷 Türkisch</option>
-      <option value="Persisch">🇮🇷 Persisch</option>
-      <option value="Hebräisch">🇮🇱 Hebräisch</option>
-    </optgroup>
-    <optgroup label="Asien">
-      <option value="Chinesisch vereinfacht">🇨🇳 Chinesisch (Vereinfacht)</option>
-      <option value="Chinesisch traditionell">🇹🇼 Chinesisch (Traditionell)</option>
-      <option value="Japanisch">🇯🇵 Japanisch</option>
-      <option value="Koreanisch">🇰🇷 Koreanisch</option>
-      <option value="Hindi">🇮🇳 Hindi</option>
-      <option value="Bengali">🇧🇩 Bengali</option>
-      <option value="Urdu">🇵🇰 Urdu</option>
-      <option value="Vietnamesisch">🇻🇳 Vietnamesisch</option>
-      <option value="Thailändisch">🇹🇭 Thailändisch</option>
-      <option value="Indonesisch">🇮🇩 Indonesisch</option>
-      <option value="Malaiisch">🇲🇾 Malaiisch</option>
-      <option value="Philippinisch">🇵🇭 Philippinisch</option>
-    </optgroup>
-    <optgroup label="Afrika &amp; Amerika">
-      <option value="Suaheli">🇰🇪 Suaheli</option>
-      <option value="Amharisch">🇪🇹 Amharisch</option>
-      <option value="Brasilianisches Portugiesisch">🇧🇷 Portugiesisch (Brasilien)</option>
-    </optgroup>
-  </select>
-  <button onclick="swapConversationLangs()" style="background:var(--surface2);border:1px solid var(--border);border-radius:50%;width:36px;height:36px;font-size:16px;cursor:pointer;color:var(--accent);flex-shrink:0;display:flex;align-items:center;justify-content:center;" title="Sprachen tauschen">⇄</button>
-  <select id="convLangB" class="lang-select" style="flex:1;" onchange="updateConversationChips()">
-    <optgroup label="Europa">
-      <option value="Deutsch">🇩🇪 Deutsch</option>
-      <option value="Englisch" selected>🇬🇧 Englisch</option>
-      <option value="Französisch">🇫🇷 Französisch</option>
-      <option value="Spanisch">🇪🇸 Spanisch</option>
-      <option value="Italienisch">🇮🇹 Italienisch</option>
-      <option value="Portugiesisch">🇵🇹 Portugiesisch</option>
-      <option value="Niederländisch">🇳🇱 Niederländisch</option>
-      <option value="Polnisch">🇵🇱 Polnisch</option>
-      <option value="Russisch">🇷🇺 Russisch</option>
-      <option value="Ukrainisch">🇺🇦 Ukrainisch</option>
-      <option value="Schwedisch">🇸🇪 Schwedisch</option>
-      <option value="Norwegisch">🇳🇴 Norwegisch</option>
-      <option value="Dänisch">🇩🇰 Dänisch</option>
-      <option value="Finnisch">🇫🇮 Finnisch</option>
-      <option value="Griechisch">🇬🇷 Griechisch</option>
-      <option value="Rumänisch">🇷🇴 Rumänisch</option>
-      <option value="Tschechisch">🇨🇿 Tschechisch</option>
-      <option value="Ungarisch">🇭🇺 Ungarisch</option>
-      <option value="Albanisch">🇦🇱 Albanisch</option>
-      <option value="Kroatisch">🇭🇷 Kroatisch</option>
-      <option value="Serbisch">🇷🇸 Serbisch</option>
-      <option value="Slowakisch">🇸🇰 Slowakisch</option>
-      <option value="Bulgarisch">🇧🇬 Bulgarisch</option>
-    </optgroup>
-    <optgroup label="Naher Osten">
-      <option value="Arabisch">🇸🇦 Arabisch</option>
-      <option value="Türkisch">🇹🇷 Türkisch</option>
-      <option value="Persisch">🇮🇷 Persisch</option>
-      <option value="Hebräisch">🇮🇱 Hebräisch</option>
-    </optgroup>
-    <optgroup label="Asien">
-      <option value="Chinesisch vereinfacht">🇨🇳 Chinesisch (Vereinfacht)</option>
-      <option value="Chinesisch traditionell">🇹🇼 Chinesisch (Traditionell)</option>
-      <option value="Japanisch">🇯🇵 Japanisch</option>
-      <option value="Koreanisch">🇰🇷 Koreanisch</option>
-      <option value="Hindi">🇮🇳 Hindi</option>
-      <option value="Bengali">🇧🇩 Bengali</option>
-      <option value="Urdu">🇵🇰 Urdu</option>
-      <option value="Vietnamesisch">🇻🇳 Vietnamesisch</option>
-      <option value="Thailändisch">🇹🇭 Thailändisch</option>
-      <option value="Indonesisch">🇮🇩 Indonesisch</option>
-      <option value="Malaiisch">🇲🇾 Malaiisch</option>
-      <option value="Philippinisch">🇵🇭 Philippinisch</option>
-    </optgroup>
-    <optgroup label="Afrika &amp; Amerika">
-      <option value="Suaheli">🇰🇪 Suaheli</option>
-      <option value="Amharisch">🇪🇹 Amharisch</option>
-      <option value="Brasilianisches Portugiesisch">🇧🇷 Portugiesisch (Brasilien)</option>
-    </optgroup>
-  </select>
-</div>
-
-<!-- Haupttabelle: Person A | Steuerung | Person B -->
-<div class="conv-table">
-
-  <!-- PERSON A -->
-  <div class="conv-side conv-side-a" id="convSideA">
-    <div>
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
-        <div style="font-size:10px;letter-spacing:0.1em;color:var(--accent);text-transform:uppercase;font-weight:500;">Person A</div>
-        <div id="convAStatus" style="font-size:10px;color:var(--muted);"></div>
+<!-- PERSON A BOX -->
+<div class="conv-v-box conv-v-box-a">
+  <div class="conv-v-header">
+    <div style="flex:1;min-width:0;">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;">
+        <span class="conv-v-label conv-v-label-a">Person A</span>
+        <span id="convAStatus" class="conv-v-status"></span>
       </div>
-      <div id="convChipA" style="font-size:10px;color:var(--muted);margin-bottom:10px;min-height:14px;line-height:1.4;"></div>
-      <div style="font-size:9px;letter-spacing:0.1em;color:var(--muted);text-transform:uppercase;margin-bottom:4px;">Gesprochen</div>
-      <div id="convAText" class="conv-output" style="margin-bottom:10px;min-height:60px;"></div>
-      <div style="font-size:9px;letter-spacing:0.1em;color:var(--muted);text-transform:uppercase;margin-bottom:4px;">↓ Übersetzung von B</div>
-      <div id="convBTransMirror" class="conv-output" style="min-height:60px;font-size:15px;line-height:1.5;"></div>
+      <select id="convLangA" class="conv-v-lang" onchange="updateConversationChips()">
+        <optgroup label="Europa">
+          <option value="Deutsch" selected>🇩🇪 Deutsch</option>
+          <option value="Englisch">🇬🇧 Englisch</option>
+          <option value="Französisch">🇫🇷 Französisch</option>
+          <option value="Spanisch">🇪🇸 Spanisch</option>
+          <option value="Italienisch">🇮🇹 Italienisch</option>
+          <option value="Portugiesisch">🇵🇹 Portugiesisch</option>
+          <option value="Niederländisch">🇳🇱 Niederländisch</option>
+          <option value="Polnisch">🇵🇱 Polnisch</option>
+          <option value="Russisch">🇷🇺 Russisch</option>
+          <option value="Ukrainisch">🇺🇦 Ukrainisch</option>
+          <option value="Schwedisch">🇸🇪 Schwedisch</option>
+          <option value="Norwegisch">🇳🇴 Norwegisch</option>
+          <option value="Dänisch">🇩🇰 Dänisch</option>
+          <option value="Finnisch">🇫🇮 Finnisch</option>
+          <option value="Griechisch">🇬🇷 Griechisch</option>
+          <option value="Rumänisch">🇷🇴 Rumänisch</option>
+          <option value="Tschechisch">🇨🇿 Tschechisch</option>
+          <option value="Ungarisch">🇭🇺 Ungarisch</option>
+          <option value="Albanisch">🇦🇱 Albanisch</option>
+          <option value="Kroatisch">🇭🇷 Kroatisch</option>
+          <option value="Serbisch">🇷🇸 Serbisch</option>
+          <option value="Slowakisch">🇸🇰 Slowakisch</option>
+          <option value="Bulgarisch">🇧🇬 Bulgarisch</option>
+        </optgroup>
+        <optgroup label="Naher Osten">
+          <option value="Arabisch">🇸🇦 Arabisch</option>
+          <option value="Türkisch">🇹🇷 Türkisch</option>
+          <option value="Persisch">🇮🇷 Persisch</option>
+          <option value="Hebräisch">🇮🇱 Hebräisch</option>
+        </optgroup>
+        <optgroup label="Asien">
+          <option value="Chinesisch vereinfacht">🇨🇳 Chinesisch (Vereinfacht)</option>
+          <option value="Chinesisch traditionell">🇹🇼 Chinesisch (Traditionell)</option>
+          <option value="Japanisch">🇯🇵 Japanisch</option>
+          <option value="Koreanisch">🇰🇷 Koreanisch</option>
+          <option value="Hindi">🇮🇳 Hindi</option>
+          <option value="Bengali">🇧🇩 Bengali</option>
+          <option value="Urdu">🇵🇰 Urdu</option>
+          <option value="Vietnamesisch">🇻🇳 Vietnamesisch</option>
+          <option value="Thailändisch">🇹🇭 Thailändisch</option>
+          <option value="Indonesisch">🇮🇩 Indonesisch</option>
+          <option value="Malaiisch">🇲🇾 Malaiisch</option>
+          <option value="Philippinisch">🇵🇭 Philippinisch</option>
+        </optgroup>
+        <optgroup label="Afrika &amp; Amerika">
+          <option value="Suaheli">🇰🇪 Suaheli</option>
+          <option value="Amharisch">🇪🇹 Amharisch</option>
+          <option value="Brasilianisches Portugiesisch">🇧🇷 Portugiesisch (Brasilien)</option>
+        </optgroup>
+      </select>
     </div>
+    <button id="convBtnA" onclick="toggleConversationRec('A')" class="conv-v-recbtn" title="Person A aufnehmen">
+      <span class="conv-v-recdot"></span>
+    </button>
   </div>
-
-  <!-- STEUERUNG MITTE -->
-  <div class="conv-center">
-    <div class="conv-controls">
-      <button id="convBtnA" onclick="toggleConversationRec('A')" class="conv-btn" style="flex-direction:column;gap:4px;">
-        <span style="font-size:22px;">🎤</span>
-        <span style="font-size:10px;font-weight:500;">A</span>
-      </button>
-      <div style="width:32px;height:1px;background:var(--border);"></div>
-      <button id="convBtnB" onclick="toggleConversationRec('B')" class="conv-btn" style="flex-direction:column;gap:4px;">
-        <span style="font-size:22px;">🎤</span>
-        <span style="font-size:10px;font-weight:500;">B</span>
-      </button>
-    </div>
+  <div class="conv-v-body">
+    <div id="convAText" class="conv-v-spoken"></div>
+    <div class="conv-v-arrow">↓ Übersetzung für A</div>
+    <div id="convBTransMirror" class="conv-v-translated"></div>
   </div>
+</div>
 
-  <!-- PERSON B (im Gegenüber-Modus per JS um 180° gedreht) -->
-  <div class="conv-side conv-side-b" id="convSideB" style="transform:none;">
-    <div id="convSideBInner">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
-        <div style="font-size:10px;letter-spacing:0.1em;color:var(--accent);text-transform:uppercase;font-weight:500;">Person B</div>
-        <div id="convBStatus" style="font-size:10px;color:var(--muted);"></div>
+<!-- PERSON B BOX -->
+<div class="conv-v-box conv-v-box-b">
+  <div class="conv-v-header">
+    <div style="flex:1;min-width:0;">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;">
+        <span class="conv-v-label conv-v-label-b">Person B</span>
+        <span id="convBStatus" class="conv-v-status"></span>
       </div>
-      <div id="convChipB" style="font-size:10px;color:var(--muted);margin-bottom:10px;min-height:14px;line-height:1.4;"></div>
-      <div style="font-size:9px;letter-spacing:0.1em;color:var(--muted);text-transform:uppercase;margin-bottom:4px;">Gesprochen</div>
-      <div id="convBText" class="conv-output" style="margin-bottom:10px;min-height:60px;"></div>
-      <div style="font-size:9px;letter-spacing:0.1em;color:var(--muted);text-transform:uppercase;margin-bottom:4px;">↓ Übersetzung von A</div>
-      <div id="convATrans" class="conv-output" style="min-height:60px;font-size:15px;line-height:1.5;"></div>
+      <select id="convLangB" class="conv-v-lang" onchange="updateConversationChips()">
+        <optgroup label="Europa">
+          <option value="Deutsch">🇩🇪 Deutsch</option>
+          <option value="Englisch" selected>🇬🇧 Englisch</option>
+          <option value="Französisch">🇫🇷 Französisch</option>
+          <option value="Spanisch">🇪🇸 Spanisch</option>
+          <option value="Italienisch">🇮🇹 Italienisch</option>
+          <option value="Portugiesisch">🇵🇹 Portugiesisch</option>
+          <option value="Niederländisch">🇳🇱 Niederländisch</option>
+          <option value="Polnisch">🇵🇱 Polnisch</option>
+          <option value="Russisch">🇷🇺 Russisch</option>
+          <option value="Ukrainisch">🇺🇦 Ukrainisch</option>
+          <option value="Schwedisch">🇸🇪 Schwedisch</option>
+          <option value="Norwegisch">🇳🇴 Norwegisch</option>
+          <option value="Dänisch">🇩🇰 Dänisch</option>
+          <option value="Finnisch">🇫🇮 Finnisch</option>
+          <option value="Griechisch">🇬🇷 Griechisch</option>
+          <option value="Rumänisch">🇷🇴 Rumänisch</option>
+          <option value="Tschechisch">🇨🇿 Tschechisch</option>
+          <option value="Ungarisch">🇭🇺 Ungarisch</option>
+          <option value="Albanisch">🇦🇱 Albanisch</option>
+          <option value="Kroatisch">🇭🇷 Kroatisch</option>
+          <option value="Serbisch">🇷🇸 Serbisch</option>
+          <option value="Slowakisch">🇸🇰 Slowakisch</option>
+          <option value="Bulgarisch">🇧🇬 Bulgarisch</option>
+        </optgroup>
+        <optgroup label="Naher Osten">
+          <option value="Arabisch">🇸🇦 Arabisch</option>
+          <option value="Türkisch">🇹🇷 Türkisch</option>
+          <option value="Persisch">🇮🇷 Persisch</option>
+          <option value="Hebräisch">🇮🇱 Hebräisch</option>
+        </optgroup>
+        <optgroup label="Asien">
+          <option value="Chinesisch vereinfacht">🇨🇳 Chinesisch (Vereinfacht)</option>
+          <option value="Chinesisch traditionell">🇹🇼 Chinesisch (Traditionell)</option>
+          <option value="Japanisch">🇯🇵 Japanisch</option>
+          <option value="Koreanisch">🇰🇷 Koreanisch</option>
+          <option value="Hindi">🇮🇳 Hindi</option>
+          <option value="Bengali">🇧🇩 Bengali</option>
+          <option value="Urdu">🇵🇰 Urdu</option>
+          <option value="Vietnamesisch">🇻🇳 Vietnamesisch</option>
+          <option value="Thailändisch">🇹🇭 Thailändisch</option>
+          <option value="Indonesisch">🇮🇩 Indonesisch</option>
+          <option value="Malaiisch">🇲🇾 Malaiisch</option>
+          <option value="Philippinisch">🇵🇭 Philippinisch</option>
+        </optgroup>
+        <optgroup label="Afrika &amp; Amerika">
+          <option value="Suaheli">🇰🇪 Suaheli</option>
+          <option value="Amharisch">🇪🇹 Amharisch</option>
+          <option value="Brasilianisches Portugiesisch">🇧🇷 Portugiesisch (Brasilien)</option>
+        </optgroup>
+      </select>
     </div>
+    <button id="convBtnB" onclick="toggleConversationRec('B')" class="conv-v-recbtn" title="Person B aufnehmen">
+      <span class="conv-v-recdot"></span>
+    </button>
   </div>
-
-</div><!-- /conv-table -->
-
-<!-- Protokoll -->
-<div class="conv-history-wrap">
-  <div class="conv-collapse-head" onclick="toggleConvHistory()">
-    <div style="display:flex;align-items:center;gap:8px;">
-      <div class="lbl" style="margin:0;">Protokoll</div>
-    </div>
-    <span class="conv-collapse-chevron" id="convHistChevron">⌄</span>
-  </div>
-  <div id="convHistBody" class="conv-collapse-body">
-    <div id="convHistory" style="display:flex;flex-direction:column;gap:8px;padding-top:8px;"></div>
+  <div class="conv-v-body">
+    <div id="convBText" class="conv-v-spoken"></div>
+    <div class="conv-v-arrow">↓ Übersetzung für B</div>
+    <div id="convATrans" class="conv-v-translated"></div>
   </div>
 </div>
 
-</div>
-</div>
-</div>
+</div><!-- /card -->
+</div><!-- /convPanel -->
 <div class="toast" id="toast"></div>
 
 <script>
@@ -2617,11 +2601,8 @@ function swapConversationLangs() {
 function setConvStatus(side, text, isActive) {
   var st = document.getElementById(side === 'A' ? 'convAStatus' : 'convBStatus');
   var btn = document.getElementById(side === 'A' ? 'convBtnA' : 'convBtnB');
-  if (st) st.textContent = side + ': ' + text;
-  if (btn) {
-    btn.classList.toggle('active', !!isActive);
-    btn.innerHTML = isActive ? ('⏹<br>' + side) : ('🎤<br>' + side);
-  }
+  if (st) st.textContent = text;
+  if (btn) btn.classList.toggle('active', !!isActive);
 }
 
 function stopConversationRec() {
@@ -2644,6 +2625,14 @@ function toggleConversationRec(side) {
   }
 
   stopConversationRec();
+
+  // Andere Seite leeren beim Wechsel
+  var otherAText = document.getElementById(side === 'A' ? 'convBText' : 'convAText');
+  var otherTrans = document.getElementById(side === 'A' ? 'convATrans' : 'convBTransMirror');
+  if (otherAText) otherAText.textContent = '';
+  if (otherTrans) otherTrans.textContent = '';
+  if (side === 'A') { convFinalTextB = ''; convLastTranslationB = ''; }
+  else { convFinalTextA = ''; convLastTranslationA = ''; }
 
   var langName = document.getElementById(side === 'A' ? 'convLangA' : 'convLangB').value;
   var code = CONV_SPEECH_CODES[langName] || 'de-DE';
@@ -2740,8 +2729,6 @@ function translateConversationSide(side, text) {
       if (side === 'A') convLastTranslationA = translated || '';
       else convLastTranslationB = translated || '';
 
-      appendConversationHistory(side, text, translated, fromLang, toLang);
-
       var autoSpeak = document.getElementById('convAutoSpeak');
       if (autoSpeak && autoSpeak.checked && translated) {
         speakConversationTranslation(toLang, translated);
@@ -2825,8 +2812,6 @@ function toggleConvFacing() {
 }
 
 function clearConversationHistory() {
-  var hist = document.getElementById('convHistory');
-  if (hist) hist.innerHTML = '';
   convFinalTextA = '';
   convFinalTextB = '';
   convLastTranslationA = '';
@@ -2839,7 +2824,6 @@ function clearConversationHistory() {
   if (b) b.textContent = '';
   if (at) at.textContent = '';
   if (bt) bt.textContent = '';
-  updateConvHistoryCount();
   toast('Gespräch zurückgesetzt', 'ok');
 }
 
