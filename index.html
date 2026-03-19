@@ -995,6 +995,10 @@ body.has-sticky-recorder .sticky-recorder .manual-add-btn{
 .conv-v-arrow{font-size:10px;text-transform:uppercase;letter-spacing:0.08em;color:var(--muted);padding-left:2px;}
 .conv-v-translated{min-height:48px;background:rgba(0,0,0,0.1);border:1px solid rgba(255,255,255,0.06);border-radius:10px;padding:10px 12px;font-size:15px;line-height:1.55;color:var(--text);}
 .conv-v-translated:empty::before{content:'…';color:var(--muted);}
+.conv-v-trans-row{display:flex;align-items:flex-start;gap:8px;}
+.conv-v-trans-row .conv-v-translated{flex:1;}
+.conv-v-speakbtn{background:none;border:1px solid var(--border);border-radius:8px;color:var(--muted);font-size:15px;padding:8px 9px;cursor:pointer;flex-shrink:0;transition:color 0.15s,border-color 0.15s;line-height:1;margin-top:0;}
+.conv-v-speakbtn:active{color:var(--ok);border-color:var(--ok);}
 </style>
 
 </head>
@@ -1412,8 +1416,8 @@ body.has-sticky-recorder .sticky-recorder .manual-add-btn{
 <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
   <div style="font-size:11px;letter-spacing:0.12em;text-transform:uppercase;font-weight:600;color:var(--accent);">🗣 Gesprächsmodus</div>
   <div style="display:flex;gap:8px;align-items:center;">
-    <label style="display:flex;align-items:center;gap:5px;font-size:11px;color:var(--muted);cursor:pointer;">
-      <input type="checkbox" id="convAutoSpeak" style="accent-color:var(--accent);width:13px;height:13px;">🔊
+    <label style="display:flex;align-items:center;gap:5px;font-size:11px;color:var(--muted);cursor:pointer;" title="Übersetzung nach jeder Aufnahme automatisch vorlesen">
+      <input type="checkbox" id="convAutoSpeak" style="accent-color:var(--accent);width:13px;height:13px;">🔊 Auto-Vorlesen
     </label>
     <button class="res-btn" onclick="clearConversationHistory()" title="Alles löschen">↺</button>
     <button onclick="hideConversationMode()" style="background:none;border:none;color:var(--muted);font-size:20px;cursor:pointer;line-height:1;padding:0 2px;">✕</button>
@@ -1495,7 +1499,10 @@ body.has-sticky-recorder .sticky-recorder .manual-add-btn{
   <div class="conv-v-body">
     <div id="convAText" class="conv-v-spoken"></div>
     <div class="conv-v-arrow">↓ Übersetzung für A</div>
-    <div id="convBTransMirror" class="conv-v-translated"></div>
+    <div class="conv-v-trans-row">
+      <div id="convBTransMirror" class="conv-v-translated"></div>
+      <button class="conv-v-speakbtn" onclick="repeatConversationTranslation('B')" title="Übersetzung vorlesen">🔊</button>
+    </div>
   </div>
 </div>
 
@@ -1567,7 +1574,10 @@ body.has-sticky-recorder .sticky-recorder .manual-add-btn{
   <div class="conv-v-body">
     <div id="convBText" class="conv-v-spoken"></div>
     <div class="conv-v-arrow">↓ Übersetzung für B</div>
-    <div id="convATrans" class="conv-v-translated"></div>
+    <div class="conv-v-trans-row">
+      <div id="convATrans" class="conv-v-translated"></div>
+      <button class="conv-v-speakbtn" onclick="repeatConversationTranslation('A')" title="Übersetzung vorlesen">🔊</button>
+    </div>
   </div>
 </div>
 
