@@ -1525,7 +1525,6 @@ body.has-sticky-recorder .sticky-recorder .manual-add-btn{
       <button class="conv-v-speakbtn" onclick="repeatConversationTranslation('B')" title="Übersetzung vorlesen">🔊</button>
     </div>
   </div>
-</div>
 
 <!-- PERSON B BOX -->
 <div class="conv-v-box conv-v-box-b">
@@ -1601,7 +1600,6 @@ body.has-sticky-recorder .sticky-recorder .manual-add-btn{
       <button class="conv-v-speakbtn" onclick="repeatConversationTranslation('A')" title="Übersetzung vorlesen">🔊</button>
     </div>
   </div>
-</div>
 
 </div><!-- /card -->
 </div><!-- /convPanel -->
@@ -2604,7 +2602,7 @@ function showConversationMode() {
   var panel = document.getElementById('convPanel');
   if (panel) panel.style.display = 'block';
   var sticky = document.querySelector('.sticky-recorder');
-  if (sticky) sticky.style.display = 'none';
+  if (sticky) sticky.style.setProperty('display', 'none', 'important');
   updateConversationChips();
   tryRestoreConvSession();
   try { window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' }); } catch(e) {}
@@ -2615,7 +2613,7 @@ function hideConversationMode() {
   var panel = document.getElementById('convPanel');
   if (panel) panel.style.display = 'none';
   var sticky = document.querySelector('.sticky-recorder');
-  if (sticky) sticky.style.display = '';
+  if (sticky) sticky.style.removeProperty('display');
   document.body.classList.remove('conv-fullscreen');
 }
 
