@@ -976,11 +976,11 @@ body.has-sticky-recorder .sticky-recorder .manual-add-btn{
   }
 }
 /* ── Neues vertikales Gesprächsmodus-Layout ── */
-.conv-v-box{border-radius:18px;padding:12px;margin-bottom:10px;border:1.5px solid;overflow:hidden;}
+.conv-v-box{border-radius:18px;padding:0;margin-bottom:10px;border:1.5px solid;overflow:hidden;position:relative;}
 .conv-v-box-a{background:rgba(123,92,255,0.07);border-color:rgba(123,92,255,0.45);}
 .conv-v-box-b{background:rgba(0,229,160,0.06);border-color:rgba(0,229,160,0.40);margin-bottom:0;}
-.conv-v-inner{transition:transform 0.35s cubic-bezier(.4,0,.2,1);transform-origin:center center;will-change:transform;}
-.conv-v-header{display:flex;align-items:center;gap:7px;margin-bottom:8px;}
+.conv-v-inner{padding:14px;min-height:260px;display:flex;flex-direction:column;gap:8px;box-sizing:border-box;transition:transform 0.35s cubic-bezier(.4,0,.2,1);transform-origin:center center;will-change:transform;}
+.conv-v-header{display:flex;align-items:center;gap:7px;flex-shrink:0;}
 .conv-v-label{font-size:11px;font-weight:600;letter-spacing:0.12em;text-transform:uppercase;white-space:nowrap;}
 .conv-v-label-a{color:var(--accent);}
 .conv-v-label-b{color:var(--ok);}
@@ -992,13 +992,13 @@ body.has-sticky-recorder .sticky-recorder .manual-add-btn{
 .conv-v-recbtn.active .conv-v-recdot{background:#fff;border-radius:2px;width:9px;height:9px;}
 .conv-v-rotatebtn{width:32px;height:32px;border-radius:8px;border:1px solid var(--border);background:none;color:var(--muted);font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:color 0.15s,border-color 0.15s;line-height:1;}
 .conv-v-rotatebtn:active{color:var(--text);border-color:var(--text);}
-.conv-v-body{display:flex;flex-direction:column;gap:6px;}
-.conv-v-spoken{min-height:44px;background:rgba(0,0,0,0.18);border:1px solid var(--border);border-radius:10px;padding:8px 11px;font-size:14px;line-height:1.55;color:var(--text);}
+.conv-v-body{flex:1;display:flex;flex-direction:column;gap:6px;}
+.conv-v-spoken{flex:1;min-height:70px;background:rgba(0,0,0,0.18);border:1px solid var(--border);border-radius:10px;padding:8px 11px;font-size:14px;line-height:1.55;color:var(--text);}
 .conv-v-spoken:empty::before{content:'…';color:var(--muted);}
-.conv-v-arrow{font-size:10px;text-transform:uppercase;letter-spacing:0.08em;color:var(--muted);padding-left:2px;}
-.conv-v-translated{min-height:44px;background:rgba(0,0,0,0.1);border:1px solid rgba(255,255,255,0.06);border-radius:10px;padding:8px 11px;font-size:14px;line-height:1.55;color:var(--text);}
+.conv-v-arrow{font-size:10px;text-transform:uppercase;letter-spacing:0.08em;color:var(--muted);padding-left:2px;flex-shrink:0;}
+.conv-v-translated{flex:1;min-height:70px;background:rgba(0,0,0,0.1);border:1px solid rgba(255,255,255,0.06);border-radius:10px;padding:8px 11px;font-size:14px;line-height:1.55;color:var(--text);}
 .conv-v-translated:empty::before{content:'…';color:var(--muted);}
-.conv-v-trans-row{display:flex;align-items:flex-start;gap:8px;}
+.conv-v-trans-row{display:flex;align-items:flex-start;gap:8px;flex:1;}
 .conv-v-trans-row .conv-v-translated{flex:1;}
 .conv-v-speakbtn{background:none;border:1px solid var(--border);border-radius:8px;color:var(--muted);font-size:15px;padding:7px 8px;cursor:pointer;flex-shrink:0;transition:color 0.15s,border-color 0.15s;line-height:1;}
 .conv-v-speakbtn:active{color:var(--ok);border-color:var(--ok);}
@@ -2595,18 +2595,20 @@ function rotateConvBox(side) {
   convRotation[side] = (convRotation[side] + 90) % 360;
   var inner = document.getElementById('convInner' + side);
   if (!inner) return;
-  var deg = convRotation[side];
-  inner.style.transform = deg ? 'rotate(' + deg + 'deg)' : '';
-  // Bei 90°/270° Höhe der Box anpassen damit Inhalt nicht überlappt
   var box = inner.parentElement;
+  var deg = convRotation[side];
   if (deg === 90 || deg === 270) {
-    var w = box.offsetWidth;
-    inner.style.width = box.offsetHeight + 'px';
-    inner.style.marginLeft = ((box.offsetWidth - box.offsetHeight) / 2) + 'px';
+    // Box quadratisch machen (Breite = Höhe) damit Inhalt nach Rotation passt
+    var bw = box.offsetWidth;
+    box.style.height = bw + 'px';
+    inner.style.width = bw + 'px';
+    inner.style.height = bw + 'px';
   } else {
+    box.style.height = '';
     inner.style.width = '';
-    inner.style.marginLeft = '';
+    inner.style.height = '';
   }
+  inner.style.transform = deg ? 'rotate(' + deg + 'deg)' : '';
 }
 
 function updateConversationChips() {
