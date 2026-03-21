@@ -976,28 +976,31 @@ body.has-sticky-recorder .sticky-recorder .manual-add-btn{
   }
 }
 /* ── Neues vertikales Gesprächsmodus-Layout ── */
-.conv-v-box{border-radius:18px;padding:14px;margin-bottom:10px;border:1.5px solid;}
+.conv-v-box{border-radius:18px;padding:12px;margin-bottom:10px;border:1.5px solid;overflow:hidden;}
 .conv-v-box-a{background:rgba(123,92,255,0.07);border-color:rgba(123,92,255,0.45);}
 .conv-v-box-b{background:rgba(0,229,160,0.06);border-color:rgba(0,229,160,0.40);margin-bottom:0;}
-.conv-v-header{display:flex;align-items:center;gap:10px;margin-bottom:10px;}
-.conv-v-label{font-size:11px;font-weight:600;letter-spacing:0.12em;text-transform:uppercase;}
+.conv-v-inner{transition:transform 0.35s cubic-bezier(.4,0,.2,1);transform-origin:center center;will-change:transform;}
+.conv-v-header{display:flex;align-items:center;gap:7px;margin-bottom:8px;}
+.conv-v-label{font-size:11px;font-weight:600;letter-spacing:0.12em;text-transform:uppercase;white-space:nowrap;}
 .conv-v-label-a{color:var(--accent);}
 .conv-v-label-b{color:var(--ok);}
 .conv-v-status{font-size:10px;color:var(--muted);}
-.conv-v-lang{font-size:12px;background:var(--bg);border:1px solid var(--border);border-radius:8px;color:var(--text);padding:5px 8px;width:100%;font-family:'DM Mono',monospace;margin-top:4px;appearance:none;-webkit-appearance:none;}
-.conv-v-recbtn{width:54px;height:54px;border-radius:50%;border:2px solid var(--border);background:var(--surface2);cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all 0.2s;}
-.conv-v-recbtn.active{background:var(--rec);border-color:var(--rec);box-shadow:0 0 0 8px var(--rec-glow);}
-.conv-v-recdot{width:16px;height:16px;border-radius:50%;background:var(--rec);display:block;transition:all 0.2s;}
-.conv-v-recbtn.active .conv-v-recdot{background:#fff;border-radius:3px;width:12px;height:12px;}
+.conv-v-lang{font-size:12px;background:var(--bg);border:1px solid var(--border);border-radius:8px;color:var(--text);padding:4px 6px;flex:1;min-width:0;font-family:'DM Mono',monospace;appearance:none;-webkit-appearance:none;height:32px;}
+.conv-v-recbtn{width:38px;height:38px;border-radius:50%;border:2px solid var(--border);background:var(--surface2);cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all 0.2s;}
+.conv-v-recbtn.active{background:var(--rec);border-color:var(--rec);box-shadow:0 0 0 6px var(--rec-glow);}
+.conv-v-recdot{width:12px;height:12px;border-radius:50%;background:var(--rec);display:block;transition:all 0.2s;}
+.conv-v-recbtn.active .conv-v-recdot{background:#fff;border-radius:2px;width:9px;height:9px;}
+.conv-v-rotatebtn{width:32px;height:32px;border-radius:8px;border:1px solid var(--border);background:none;color:var(--muted);font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:color 0.15s,border-color 0.15s;line-height:1;}
+.conv-v-rotatebtn:active{color:var(--text);border-color:var(--text);}
 .conv-v-body{display:flex;flex-direction:column;gap:6px;}
-.conv-v-spoken{min-height:48px;background:rgba(0,0,0,0.18);border:1px solid var(--border);border-radius:10px;padding:10px 12px;font-size:15px;line-height:1.55;color:var(--text);}
+.conv-v-spoken{min-height:44px;background:rgba(0,0,0,0.18);border:1px solid var(--border);border-radius:10px;padding:8px 11px;font-size:14px;line-height:1.55;color:var(--text);}
 .conv-v-spoken:empty::before{content:'…';color:var(--muted);}
 .conv-v-arrow{font-size:10px;text-transform:uppercase;letter-spacing:0.08em;color:var(--muted);padding-left:2px;}
-.conv-v-translated{min-height:48px;background:rgba(0,0,0,0.1);border:1px solid rgba(255,255,255,0.06);border-radius:10px;padding:10px 12px;font-size:15px;line-height:1.55;color:var(--text);}
+.conv-v-translated{min-height:44px;background:rgba(0,0,0,0.1);border:1px solid rgba(255,255,255,0.06);border-radius:10px;padding:8px 11px;font-size:14px;line-height:1.55;color:var(--text);}
 .conv-v-translated:empty::before{content:'…';color:var(--muted);}
 .conv-v-trans-row{display:flex;align-items:flex-start;gap:8px;}
 .conv-v-trans-row .conv-v-translated{flex:1;}
-.conv-v-speakbtn{background:none;border:1px solid var(--border);border-radius:8px;color:var(--muted);font-size:15px;padding:8px 9px;cursor:pointer;flex-shrink:0;transition:color 0.15s,border-color 0.15s;line-height:1;margin-top:0;}
+.conv-v-speakbtn{background:none;border:1px solid var(--border);border-radius:8px;color:var(--muted);font-size:15px;padding:7px 8px;cursor:pointer;flex-shrink:0;transition:color 0.15s,border-color 0.15s;line-height:1;}
 .conv-v-speakbtn:active{color:var(--ok);border-color:var(--ok);}
 /* Feature 4: Geschwindigkeit pro Person */
 /* Feature 5: Wort-Erklärung Popup */
@@ -1453,13 +1456,11 @@ body.has-sticky-recorder .sticky-recorder .manual-add-btn{
 
 <!-- PERSON A BOX -->
 <div class="conv-v-box conv-v-box-a">
-  <div class="conv-v-header">
-    <div style="flex:1;min-width:0;">
-      <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;">
-        <span class="conv-v-label conv-v-label-a">Person A</span>
-        <span id="convAStatus" class="conv-v-status"></span>
-      </div>
-      <select id="convLangA" class="conv-v-lang" onchange="updateConversationChips()" style="margin-bottom:4px;">
+  <div class="conv-v-inner" id="convInnerA">
+    <div class="conv-v-header">
+      <span class="conv-v-label conv-v-label-a">Person A</span>
+      <span id="convAStatus" class="conv-v-status"></span>
+      <select id="convLangA" class="conv-v-lang" onchange="updateConversationChips()">
         <optgroup label="Europa">
           <option value="Deutsch" selected>🇩🇪 Deutsch</option>
           <option value="Englisch">🇬🇧 Englisch</option>
@@ -1511,30 +1512,29 @@ body.has-sticky-recorder .sticky-recorder .manual-add-btn{
           <option value="Brasilianisches Portugiesisch">🇧🇷 Portugiesisch (Brasilien)</option>
         </optgroup>
       </select>
+      <button id="convBtnA" onclick="toggleConversationRec('A')" class="conv-v-recbtn" title="Person A aufnehmen">
+        <span class="conv-v-recdot"></span>
+      </button>
+      <button class="conv-v-rotatebtn" onclick="rotateConvBox('A')" title="Drehen">↻</button>
     </div>
+    <div class="conv-v-body">
+      <div id="convAText" class="conv-v-spoken"></div>
+      <div class="conv-v-arrow">↓ Übersetzung für A</div>
+      <div class="conv-v-trans-row">
+        <div id="convBTransMirror" class="conv-v-translated" onclick="handleTransWordTap(event,'A')" title="Wort antippen für Erklärung"></div>
+        <button class="conv-v-speakbtn" onclick="repeatConversationTranslation('B')" title="Übersetzung vorlesen">🔊</button>
+      </div>
     </div>
-    <button id="convBtnA" onclick="toggleConversationRec('A')" class="conv-v-recbtn" title="Person A aufnehmen">
-      <span class="conv-v-recdot"></span>
-    </button>
   </div>
-  <div class="conv-v-body">
-    <div id="convAText" class="conv-v-spoken"></div>
-    <div class="conv-v-arrow">↓ Übersetzung für A</div>
-    <div class="conv-v-trans-row">
-      <div id="convBTransMirror" class="conv-v-translated" onclick="handleTransWordTap(event,'A')" title="Wort antippen für Erklärung"></div>
-      <button class="conv-v-speakbtn" onclick="repeatConversationTranslation('B')" title="Übersetzung vorlesen">🔊</button>
-    </div>
-  </div>
+</div>
 
 <!-- PERSON B BOX -->
 <div class="conv-v-box conv-v-box-b">
-  <div class="conv-v-header">
-    <div style="flex:1;min-width:0;">
-      <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;">
-        <span class="conv-v-label conv-v-label-b">Person B</span>
-        <span id="convBStatus" class="conv-v-status"></span>
-      </div>
-      <select id="convLangB" class="conv-v-lang" onchange="updateConversationChips()" style="margin-bottom:4px;">
+  <div class="conv-v-inner" id="convInnerB">
+    <div class="conv-v-header">
+      <span class="conv-v-label conv-v-label-b">Person B</span>
+      <span id="convBStatus" class="conv-v-status"></span>
+      <select id="convLangB" class="conv-v-lang" onchange="updateConversationChips()">
         <optgroup label="Europa">
           <option value="Deutsch">🇩🇪 Deutsch</option>
           <option value="Englisch" selected>🇬🇧 Englisch</option>
@@ -1586,20 +1586,21 @@ body.has-sticky-recorder .sticky-recorder .manual-add-btn{
           <option value="Brasilianisches Portugiesisch">🇧🇷 Portugiesisch (Brasilien)</option>
         </optgroup>
       </select>
+      <button id="convBtnB" onclick="toggleConversationRec('B')" class="conv-v-recbtn" title="Person B aufnehmen">
+        <span class="conv-v-recdot"></span>
+      </button>
+      <button class="conv-v-rotatebtn" onclick="rotateConvBox('B')" title="Drehen">↻</button>
     </div>
+    <div class="conv-v-body">
+      <div id="convBText" class="conv-v-spoken"></div>
+      <div class="conv-v-arrow">↓ Übersetzung für B</div>
+      <div class="conv-v-trans-row">
+        <div id="convATrans" class="conv-v-translated" onclick="handleTransWordTap(event,'B')" title="Wort antippen für Erklärung"></div>
+        <button class="conv-v-speakbtn" onclick="repeatConversationTranslation('A')" title="Übersetzung vorlesen">🔊</button>
+      </div>
     </div>
-    <button id="convBtnB" onclick="toggleConversationRec('B')" class="conv-v-recbtn" title="Person B aufnehmen">
-      <span class="conv-v-recdot"></span>
-    </button>
   </div>
-  <div class="conv-v-body">
-    <div id="convBText" class="conv-v-spoken"></div>
-    <div class="conv-v-arrow">↓ Übersetzung für B</div>
-    <div class="conv-v-trans-row">
-      <div id="convATrans" class="conv-v-translated" onclick="handleTransWordTap(event,'B')" title="Wort antippen für Erklärung"></div>
-      <button class="conv-v-speakbtn" onclick="repeatConversationTranslation('A')" title="Übersetzung vorlesen">🔊</button>
-    </div>
-  </div>
+</div>
 
 </div><!-- /card -->
 </div><!-- /convPanel -->
@@ -2588,6 +2589,25 @@ var CONV_SPEECH_CODES = {
   'Amharisch':'am-ET',
   'Brasilianisches Portugiesisch':'pt-BR'
 };
+
+var convRotation = {A: 0, B: 0};
+function rotateConvBox(side) {
+  convRotation[side] = (convRotation[side] + 90) % 360;
+  var inner = document.getElementById('convInner' + side);
+  if (!inner) return;
+  var deg = convRotation[side];
+  inner.style.transform = deg ? 'rotate(' + deg + 'deg)' : '';
+  // Bei 90°/270° Höhe der Box anpassen damit Inhalt nicht überlappt
+  var box = inner.parentElement;
+  if (deg === 90 || deg === 270) {
+    var w = box.offsetWidth;
+    inner.style.width = box.offsetHeight + 'px';
+    inner.style.marginLeft = ((box.offsetWidth - box.offsetHeight) / 2) + 'px';
+  } else {
+    inner.style.width = '';
+    inner.style.marginLeft = '';
+  }
+}
 
 function updateConversationChips() {
   var a = document.getElementById('convLangA');
