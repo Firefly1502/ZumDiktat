@@ -999,6 +999,19 @@ body.has-sticky-recorder .sticky-recorder .manual-add-btn{
 .conv-v-trans-row .conv-v-translated{flex:1;}
 .conv-v-speakbtn{background:none;border:1px solid var(--border);border-radius:8px;color:var(--muted);font-size:15px;padding:8px 9px;cursor:pointer;flex-shrink:0;transition:color 0.15s,border-color 0.15s;line-height:1;margin-top:0;}
 .conv-v-speakbtn:active{color:var(--ok);border-color:var(--ok);}
+/* Feature 4: Geschwindigkeit pro Person */
+.conv-speed-row{display:flex;align-items:center;gap:6px;padding:5px 0 2px;}
+.conv-speed-row input[type=range]{flex:1;accent-color:var(--accent);cursor:pointer;height:3px;}
+.conv-speed-lbl{font-size:11px;color:var(--muted);white-space:nowrap;}
+/* Feature 5: Wort-Erklärung Popup */
+.conv-word-popup{position:fixed;z-index:9999;background:var(--surface);border:1.5px solid var(--accent);border-radius:14px;padding:12px 14px 12px 14px;max-width:270px;box-shadow:0 8px 32px rgba(0,0,0,0.6);font-size:12px;line-height:1.6;color:var(--text);}
+.conv-word-popup-word{font-size:14px;font-weight:600;color:var(--accent);margin-bottom:5px;padding-right:20px;}
+.conv-word-popup-close{position:absolute;top:8px;right:10px;background:none;border:none;color:var(--muted);font-size:16px;cursor:pointer;line-height:1;}
+.conv-v-translated{cursor:pointer;}
+/* Feature 3: Restore-Banner */
+.conv-restore-banner{display:none;align-items:center;gap:8px;background:rgba(123,92,255,0.1);border:1px solid rgba(123,92,255,0.35);border-radius:10px;padding:8px 12px;font-size:11px;color:var(--muted);margin-bottom:10px;}
+.conv-restore-banner button{background:var(--accent);border:none;border-radius:6px;color:#fff;font-size:11px;padding:4px 10px;cursor:pointer;}
+.conv-restore-banner .conv-rb-dismiss{background:none;color:var(--muted);padding:4px 6px;}
 </style>
 
 </head>
@@ -1417,11 +1430,21 @@ body.has-sticky-recorder .sticky-recorder .manual-add-btn{
   <div style="font-size:11px;letter-spacing:0.12em;text-transform:uppercase;font-weight:600;color:var(--accent);">🗣 Gesprächsmodus</div>
   <div style="display:flex;gap:8px;align-items:center;">
     <label style="display:flex;align-items:center;gap:5px;font-size:11px;color:var(--muted);cursor:pointer;" title="Übersetzung nach jeder Aufnahme automatisch vorlesen">
-      <input type="checkbox" id="convAutoSpeak" style="accent-color:var(--accent);width:13px;height:13px;">🔊 Auto-Vorlesen
+      <input type="checkbox" id="convAutoSpeak" style="accent-color:var(--accent);width:13px;height:13px;">🔊 Auto
+    </label>
+    <label style="display:flex;align-items:center;gap:5px;font-size:11px;color:var(--muted);cursor:pointer;" title="Aufnahme automatisch stoppen wenn Stille erkannt wird">
+      <input type="checkbox" id="convAutoSilence" style="accent-color:var(--accent);width:13px;height:13px;">⏱ Stille
     </label>
     <button class="res-btn" onclick="clearConversationHistory()" title="Alles löschen">↺</button>
     <button onclick="hideConversationMode()" style="background:none;border:none;color:var(--muted);font-size:20px;cursor:pointer;line-height:1;padding:0 2px;">✕</button>
   </div>
+</div>
+
+<!-- Restore-Banner -->
+<div id="convRestoreBanner" class="conv-restore-banner">
+  💾 Letzte Sitzung gefunden –
+  <button onclick="restoreConvSession()">Wiederherstellen</button>
+  <button class="conv-rb-dismiss" onclick="document.getElementById('convRestoreBanner').style.display='none'">✕</button>
 </div>
 
 <!-- Versteckte Elemente für JS-Kompatibilität -->
@@ -1439,7 +1462,7 @@ body.has-sticky-recorder .sticky-recorder .manual-add-btn{
         <span class="conv-v-label conv-v-label-a">Person A</span>
         <span id="convAStatus" class="conv-v-status"></span>
       </div>
-      <select id="convLangA" class="conv-v-lang" onchange="updateConversationChips()">
+      <select id="convLangA" class="conv-v-lang" onchange="updateConversationChips()" style="margin-bottom:4px;">
         <optgroup label="Europa">
           <option value="Deutsch" selected>🇩🇪 Deutsch</option>
           <option value="Englisch">🇬🇧 Englisch</option>
@@ -1492,6 +1515,13 @@ body.has-sticky-recorder .sticky-recorder .manual-add-btn{
         </optgroup>
       </select>
     </div>
+      <div class="conv-speed-row">
+        <span class="conv-speed-lbl">🐢</span>
+        <input type="range" id="convSpeedSliderA" min="0.5" max="2.0" step="0.1" value="1.0" oninput="document.getElementById('convSpeedLblA').textContent=parseFloat(this.value).toFixed(1)+'x'">
+        <span class="conv-speed-lbl" id="convSpeedLblA">1.0x</span>
+        <span class="conv-speed-lbl">🐇</span>
+      </div>
+    </div>
     <button id="convBtnA" onclick="toggleConversationRec('A')" class="conv-v-recbtn" title="Person A aufnehmen">
       <span class="conv-v-recdot"></span>
     </button>
@@ -1500,7 +1530,7 @@ body.has-sticky-recorder .sticky-recorder .manual-add-btn{
     <div id="convAText" class="conv-v-spoken"></div>
     <div class="conv-v-arrow">↓ Übersetzung für A</div>
     <div class="conv-v-trans-row">
-      <div id="convBTransMirror" class="conv-v-translated"></div>
+      <div id="convBTransMirror" class="conv-v-translated" onclick="handleTransWordTap(event,'A')" title="Wort antippen für Erklärung"></div>
       <button class="conv-v-speakbtn" onclick="repeatConversationTranslation('B')" title="Übersetzung vorlesen">🔊</button>
     </div>
   </div>
@@ -1514,7 +1544,7 @@ body.has-sticky-recorder .sticky-recorder .manual-add-btn{
         <span class="conv-v-label conv-v-label-b">Person B</span>
         <span id="convBStatus" class="conv-v-status"></span>
       </div>
-      <select id="convLangB" class="conv-v-lang" onchange="updateConversationChips()">
+      <select id="convLangB" class="conv-v-lang" onchange="updateConversationChips()" style="margin-bottom:4px;">
         <optgroup label="Europa">
           <option value="Deutsch">🇩🇪 Deutsch</option>
           <option value="Englisch" selected>🇬🇧 Englisch</option>
@@ -1567,6 +1597,13 @@ body.has-sticky-recorder .sticky-recorder .manual-add-btn{
         </optgroup>
       </select>
     </div>
+      <div class="conv-speed-row">
+        <span class="conv-speed-lbl">🐢</span>
+        <input type="range" id="convSpeedSliderB" min="0.5" max="2.0" step="0.1" value="1.0" oninput="document.getElementById('convSpeedLblB').textContent=parseFloat(this.value).toFixed(1)+'x'">
+        <span class="conv-speed-lbl" id="convSpeedLblB">1.0x</span>
+        <span class="conv-speed-lbl">🐇</span>
+      </div>
+    </div>
     <button id="convBtnB" onclick="toggleConversationRec('B')" class="conv-v-recbtn" title="Person B aufnehmen">
       <span class="conv-v-recdot"></span>
     </button>
@@ -1575,7 +1612,7 @@ body.has-sticky-recorder .sticky-recorder .manual-add-btn{
     <div id="convBText" class="conv-v-spoken"></div>
     <div class="conv-v-arrow">↓ Übersetzung für B</div>
     <div class="conv-v-trans-row">
-      <div id="convATrans" class="conv-v-translated"></div>
+      <div id="convATrans" class="conv-v-translated" onclick="handleTransWordTap(event,'B')" title="Wort antippen für Erklärung"></div>
       <button class="conv-v-speakbtn" onclick="repeatConversationTranslation('A')" title="Übersetzung vorlesen">🔊</button>
     </div>
   </div>
@@ -1583,6 +1620,13 @@ body.has-sticky-recorder .sticky-recorder .manual-add-btn{
 
 </div><!-- /card -->
 </div><!-- /convPanel -->
+
+<!-- Wort-Erklärung Popup (global) -->
+<div id="convWordPopup" style="display:none;" class="conv-word-popup">
+  <button class="conv-word-popup-close" onclick="closeWordPopup()">✕</button>
+  <div id="convWordPopupWord" class="conv-word-popup-word"></div>
+  <div id="convWordPopupText" style="color:var(--muted);font-size:12px;line-height:1.6;"></div>
+</div>
 <div class="toast" id="toast"></div>
 
 <script>
@@ -2575,6 +2619,7 @@ function showConversationMode() {
   var panel = document.getElementById('convPanel');
   if (panel) panel.style.display = 'block';
   updateConversationChips();
+  tryRestoreConvSession();
   try { window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' }); } catch(e) {}
 }
 
@@ -2616,9 +2661,8 @@ function setConvStatus(side, text, isActive) {
 }
 
 function stopConversationRec() {
-  try {
-    if (convRecognition) convRecognition.stop();
-  } catch(e) {}
+  stopSilenceDetection();
+  try { if (convRecognition) convRecognition.stop(); } catch(e) {}
   if (convActiveSpeaker === 'A') setConvStatus('A', 'Bereit', false);
   if (convActiveSpeaker === 'B') setConvStatus('B', 'Bereit', false);
   convActiveSpeaker = null;
@@ -2666,7 +2710,8 @@ function toggleConversationRec(side) {
     var textEl = document.getElementById(side === 'A' ? 'convAText' : 'convBText');
     var base = side === 'A' ? convFinalTextA : convFinalTextB;
     if (newFinal) {
-      base += (base ? ' ' : '') + newFinal.trim();
+      var pFinal = applyPunctuation(newFinal.trim(), langName);
+      base += (base ? ' ' : '') + pFinal;
       if (side === 'A') convFinalTextA = base;
       else convFinalTextB = base;
     }
@@ -2696,6 +2741,7 @@ function toggleConversationRec(side) {
 
   try {
     convRecognition.start();
+    startSilenceDetection(side);
   } catch(e) {
     setConvStatus(side, 'Konnte nicht starten', false);
     convActiveSpeaker = null;
@@ -2706,10 +2752,23 @@ function translateConversationSide(side, text) {
   var fromLang = document.getElementById(side === 'A' ? 'convLangA' : 'convLangB').value;
   var toLang = document.getElementById(side === 'A' ? 'convLangB' : 'convLangA').value;
   var outEl = document.getElementById(side === 'A' ? 'convATrans' : 'convBTransMirror');
-  if (outEl) {
-    outEl.textContent = '⏳ Übersetze…';
-    outEl.style.color = 'var(--muted)';
+
+  // Cache prüfen
+  var cacheKey = fromLang + '|' + toLang + '|' + text.trim();
+  var cached = getTransCache()[cacheKey];
+  if (cached) {
+    if (outEl) { outEl.textContent = cached; outEl.style.color = 'var(--text)'; }
+    if (side === 'A') convLastTranslationA = cached; else convLastTranslationB = cached;
+    var autoSpk = document.getElementById('convAutoSpeak');
+    if (autoSpk && autoSpk.checked) {
+      var spEl = document.getElementById(side === 'A' ? 'convSpeedSliderB' : 'convSpeedSliderA');
+      speakConversationTranslation(toLang, cached, spEl ? parseFloat(spEl.value) : 1.0);
+    }
+    saveConvSession();
+    return;
   }
+
+  if (outEl) { outEl.textContent = '⏳ Übersetze…'; outEl.style.color = 'var(--muted)'; }
 
   var prompt = 'Übersetze den folgenden Text von ' + fromLang + ' nach ' + toLang + '. ' +
                'Gib nur die natürliche Übersetzung zurück, ohne Erklärung:\n\n' + text;
@@ -2739,9 +2798,13 @@ function translateConversationSide(side, text) {
       if (side === 'A') convLastTranslationA = translated || '';
       else convLastTranslationB = translated || '';
 
+      if (translated) setTransCache(cacheKey, translated);
+      saveConvSession();
+
       var autoSpeak = document.getElementById('convAutoSpeak');
       if (autoSpeak && autoSpeak.checked && translated) {
-        speakConversationTranslation(toLang, translated);
+        var speedEl = document.getElementById(side === 'A' ? 'convSpeedSliderB' : 'convSpeedSliderA');
+        speakConversationTranslation(toLang, translated, speedEl ? parseFloat(speedEl.value) : 1.0);
       }
 
       var autoFlip = document.getElementById('convAutoFlip');
@@ -2757,13 +2820,14 @@ function translateConversationSide(side, text) {
     });
 }
 
-function speakConversationTranslation(langName, text) {
+function speakConversationTranslation(langName, text, speed) {
   try {
     if (!('speechSynthesis' in window) || !text) return;
     window.speechSynthesis.cancel();
     var u = new SpeechSynthesisUtterance(text);
     var code = CONV_SPEECH_CODES[langName] || 'de-DE';
     u.lang = code;
+    u.rate = speed || 1.0;
     speechSynthesis.speak(u);
   } catch(e) {}
 }
@@ -2771,11 +2835,12 @@ function speakConversationTranslation(langName, text) {
 function repeatConversationTranslation(side) {
   var langName = document.getElementById(side === 'A' ? 'convLangB' : 'convLangA').value;
   var text = side === 'A' ? convLastTranslationA : convLastTranslationB;
-  if (!text) {
-    toast('Noch keine Übersetzung vorhanden', 'err');
-    return;
-  }
-  speakConversationTranslation(langName, text);
+  if (!text) { toast('Noch keine Übersetzung vorhanden', 'err'); return; }
+  // side='B' → Button in Box A → Zuhörer ist A → Speed von A
+  // side='A' → Button in Box B → Zuhörer ist B → Speed von B
+  var sliderEl = document.getElementById(side === 'B' ? 'convSpeedSliderA' : 'convSpeedSliderB');
+  var speed = sliderEl ? parseFloat(sliderEl.value) : 1.0;
+  speakConversationTranslation(langName, text, speed);
 }
 
 function updateConvHistoryCount() {
@@ -2943,6 +3008,172 @@ function escapeHtml(s) {
   setTimeout(enforceCompactRecorder, 200);
   setTimeout(enforceCompactRecorder, 800);
 })();
+</script>
+
+<script>
+// ══════════════════════════════════════════════
+// FEATURE 6: Satzzeichen per Sprache
+// ══════════════════════════════════════════════
+var PUNCT_RULES = {
+  'Deutsch':    [['neuer absatz','\n'],['neue zeile','\n'],['anführungszeichen auf','"'],['anführungszeichen zu','"'],['komma',','],['punkt','.'],['fragezeichen','?'],['ausrufezeichen','!'],['doppelpunkt',':'],['semikolon',';'],['bindestrich','-']],
+  'Englisch':   [['new paragraph','\n'],['new line','\n'],['open quote','"'],['close quote','"'],['comma',','],['period','.'],['full stop','.'],['question mark','?'],['exclamation mark','!'],['exclamation point','!'],['colon',':'],['semicolon',';'],['hyphen','-']],
+  'Französisch':[['nouvelle ligne','\n'],['virgule',','],['point','.'],['point d\'interrogation','?'],['point d\'exclamation','!'],['deux-points',':'],['point-virgule',';']],
+  'Spanisch':   [['nueva línea','\n'],['coma',','],['punto','.'],['signo de interrogación','?'],['signo de exclamación','!'],['dos puntos',':'],['punto y coma',';']],
+  'Italienisch':[['nuova riga','\n'],['virgola',','],['punto','.'],['punto interrogativo','?'],['punto esclamativo','!'],['due punti',':'],['punto e virgola',';']]
+};
+function applyPunctuation(text, langName) {
+  var rules = PUNCT_RULES[langName];
+  if (!rules) return text;
+  var result = text;
+  rules.forEach(function(pair) {
+    result = result.replace(new RegExp('\\b' + pair[0] + '\\b', 'gi'), pair[1]);
+  });
+  return result.replace(/\s+([,\.!?:;\)])/g, '$1').trim();
+}
+
+// ══════════════════════════════════════════════
+// FEATURE 2: Übersetzungs-Cache
+// ══════════════════════════════════════════════
+function getTransCache() {
+  try { return JSON.parse(localStorage.getItem('dk_trans_cache') || '{}'); } catch(e) { return {}; }
+}
+function setTransCache(key, val) {
+  try {
+    var c = getTransCache();
+    var keys = Object.keys(c);
+    if (keys.length > 200) { delete c[keys[0]]; }
+    c[key] = val;
+    localStorage.setItem('dk_trans_cache', JSON.stringify(c));
+  } catch(e) {}
+}
+
+// ══════════════════════════════════════════════
+// FEATURE 3: Sitzung speichern & wiederherstellen
+// ══════════════════════════════════════════════
+function saveConvSession() {
+  try {
+    var s = {
+      langA: (document.getElementById('convLangA')||{}).value || '',
+      langB: (document.getElementById('convLangB')||{}).value || '',
+      aSpoken: convFinalTextA, bSpoken: convFinalTextB,
+      aTrans: convLastTranslationA, bTrans: convLastTranslationB,
+      ts: Date.now()
+    };
+    localStorage.setItem('dk_conv_session', JSON.stringify(s));
+  } catch(e) {}
+}
+function tryRestoreConvSession() {
+  try {
+    var s = JSON.parse(localStorage.getItem('dk_conv_session') || 'null');
+    if (!s || Date.now() - s.ts > 86400000) return;
+    if (!s.aSpoken && !s.bSpoken) return;
+    var banner = document.getElementById('convRestoreBanner');
+    if (banner) { banner.style.display = 'flex'; window._pendingConvSession = s; }
+  } catch(e) {}
+}
+function restoreConvSession() {
+  var s = window._pendingConvSession;
+  if (!s) return;
+  var la = document.getElementById('convLangA'), lb = document.getElementById('convLangB');
+  if (la && s.langA) la.value = s.langA;
+  if (lb && s.langB) lb.value = s.langB;
+  convFinalTextA = s.aSpoken || ''; convFinalTextB = s.bSpoken || '';
+  convLastTranslationA = s.aTrans || ''; convLastTranslationB = s.bTrans || '';
+  var els = {convAText: convFinalTextA, convBText: convFinalTextB, convATrans: convLastTranslationA, convBTransMirror: convLastTranslationB};
+  Object.keys(els).forEach(function(id) { var el = document.getElementById(id); if (el) el.textContent = els[id]; });
+  document.getElementById('convRestoreBanner').style.display = 'none';
+  toast('Sitzung wiederhergestellt', 'ok');
+}
+
+// ══════════════════════════════════════════════
+// FEATURE 1: Auto-Stille-Erkennung
+// ══════════════════════════════════════════════
+var _silStream = null, _silCtx = null, _silInterval = null;
+function startSilenceDetection(side) {
+  if (!(document.getElementById('convAutoSilence')||{}).checked) return;
+  stopSilenceDetection();
+  var lastVoice = Date.now();
+  navigator.mediaDevices.getUserMedia({audio:true,video:false}).then(function(stream) {
+    _silStream = stream;
+    _silCtx = new (window.AudioContext || window.webkitAudioContext)();
+    var src = _silCtx.createMediaStreamSource(stream);
+    var analyser = _silCtx.createAnalyser();
+    analyser.fftSize = 512;
+    src.connect(analyser);
+    var buf = new Uint8Array(analyser.frequencyBinCount);
+    _silInterval = setInterval(function() {
+      if (convActiveSpeaker !== side) { stopSilenceDetection(); return; }
+      analyser.getByteFrequencyData(buf);
+      var vol = 0; for (var i=0;i<buf.length;i++) vol += buf[i]; vol /= buf.length;
+      if (vol > 8) lastVoice = Date.now();
+      if (Date.now() - lastVoice > 2500) {
+        stopSilenceDetection();
+        stopConversationRec();
+        toast('Stille erkannt – Aufnahme gestoppt', 'ok');
+      }
+    }, 150);
+  }).catch(function(){});
+}
+function stopSilenceDetection() {
+  clearInterval(_silInterval); _silInterval = null;
+  if (_silStream) { _silStream.getTracks().forEach(function(t){t.stop();}); _silStream = null; }
+  if (_silCtx) { try { _silCtx.close(); } catch(e){} _silCtx = null; }
+}
+
+// ══════════════════════════════════════════════
+// FEATURE 5: Wort antippen → Erklärung
+// ══════════════════════════════════════════════
+function handleTransWordTap(e, listenerSide) {
+  var x = e.clientX, y = e.clientY;
+  var word = '';
+  try {
+    var r;
+    if (document.caretRangeFromPoint) { r = document.caretRangeFromPoint(x, y); }
+    else if (document.caretPositionFromPoint) {
+      var p = document.caretPositionFromPoint(x, y);
+      r = document.createRange(); r.setStart(p.offsetNode, p.offset); r.setEnd(p.offsetNode, p.offset);
+    }
+    if (r) { r.expand('word'); word = r.toString().trim(); }
+  } catch(err) {}
+  word = word.replace(/[^a-zA-ZÀ-ÿа-яА-Я\u00c0-\u024f]/g, '').trim();
+  if (!word || word.length < 2) return;
+  showWordPopup(word, x, y);
+}
+function showWordPopup(word, x, y) {
+  if (!apiKey) { toast('API-Schlüssel benötigt', 'err'); return; }
+  var popup = document.getElementById('convWordPopup');
+  var wordEl = document.getElementById('convWordPopupWord');
+  var textEl = document.getElementById('convWordPopupText');
+  if (!popup) return;
+  wordEl.textContent = word;
+  textEl.textContent = '⏳ Lädt…';
+  textEl.style.color = 'var(--muted)';
+  var left = Math.min(x + 10, window.innerWidth - 290);
+  var top = Math.min(y + 10, window.innerHeight - 140);
+  popup.style.left = left + 'px'; popup.style.top = top + 'px'; popup.style.display = 'block';
+  fetch('https://api.anthropic.com/v1/messages', {
+    method:'POST',
+    headers:{'Content-Type':'application/json','x-api-key':apiKey,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
+    body:JSON.stringify({model:'claude-haiku-4-5-20251001',max_tokens:100,messages:[{role:'user',content:'Erkläre das Wort "'+word+'" kurz auf Deutsch in 1-2 Sätzen. Nur die Erklärung.'}]})
+  }).then(function(r){return r.json();}).then(function(d){
+    registerUsage(d);
+    var t = d.content && d.content[0] && d.content[0].text ? d.content[0].text.trim() : '–';
+    textEl.textContent = t; textEl.style.color = 'var(--text)';
+  }).catch(function(){ textEl.textContent = 'Fehler beim Laden'; });
+}
+function closeWordPopup() {
+  var p = document.getElementById('convWordPopup'); if (p) p.style.display = 'none';
+}
+// Popup schließen bei Klick außerhalb
+document.addEventListener('click', function(e) {
+  var p = document.getElementById('convWordPopup');
+  if (p && p.style.display !== 'none' && !p.contains(e.target)) {
+    var transA = document.getElementById('convBTransMirror');
+    var transB = document.getElementById('convATrans');
+    if ((transA && transA.contains(e.target)) || (transB && transB.contains(e.target))) return;
+    closeWordPopup();
+  }
+});
 </script>
 
 </body>
