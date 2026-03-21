@@ -2603,6 +2603,8 @@ function updateConversationChips() {
 function showConversationMode() {
   var panel = document.getElementById('convPanel');
   if (panel) panel.style.display = 'block';
+  var sticky = document.querySelector('.sticky-recorder');
+  if (sticky) sticky.style.display = 'none';
   updateConversationChips();
   tryRestoreConvSession();
   try { window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' }); } catch(e) {}
@@ -2612,6 +2614,8 @@ function hideConversationMode() {
   stopConversationRec();
   var panel = document.getElementById('convPanel');
   if (panel) panel.style.display = 'none';
+  var sticky = document.querySelector('.sticky-recorder');
+  if (sticky) sticky.style.display = '';
   document.body.classList.remove('conv-fullscreen');
 }
 
