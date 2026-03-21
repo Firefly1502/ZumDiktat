@@ -1000,9 +1000,6 @@ body.has-sticky-recorder .sticky-recorder .manual-add-btn{
 .conv-v-speakbtn{background:none;border:1px solid var(--border);border-radius:8px;color:var(--muted);font-size:15px;padding:8px 9px;cursor:pointer;flex-shrink:0;transition:color 0.15s,border-color 0.15s;line-height:1;margin-top:0;}
 .conv-v-speakbtn:active{color:var(--ok);border-color:var(--ok);}
 /* Feature 4: Geschwindigkeit pro Person */
-.conv-speed-row{display:flex;align-items:center;gap:6px;padding:5px 0 2px;}
-.conv-speed-row input[type=range]{flex:1;accent-color:var(--accent);cursor:pointer;height:3px;}
-.conv-speed-lbl{font-size:11px;color:var(--muted);white-space:nowrap;}
 /* Feature 5: Wort-Erklärung Popup */
 .conv-word-popup{position:fixed;z-index:9999;background:var(--surface);border:1.5px solid var(--accent);border-radius:14px;padding:12px 14px 12px 14px;max-width:270px;box-shadow:0 8px 32px rgba(0,0,0,0.6);font-size:12px;line-height:1.6;color:var(--text);}
 .conv-word-popup-word{font-size:14px;font-weight:600;color:var(--accent);margin-bottom:5px;padding-right:20px;}
@@ -1515,12 +1512,6 @@ body.has-sticky-recorder .sticky-recorder .manual-add-btn{
         </optgroup>
       </select>
     </div>
-      <div class="conv-speed-row">
-        <span class="conv-speed-lbl">🐢</span>
-        <input type="range" id="convSpeedSliderA" min="0.5" max="2.0" step="0.1" value="1.0" oninput="document.getElementById('convSpeedLblA').textContent=parseFloat(this.value).toFixed(1)+'x'">
-        <span class="conv-speed-lbl" id="convSpeedLblA">1.0x</span>
-        <span class="conv-speed-lbl">🐇</span>
-      </div>
     </div>
     <button id="convBtnA" onclick="toggleConversationRec('A')" class="conv-v-recbtn" title="Person A aufnehmen">
       <span class="conv-v-recdot"></span>
@@ -1597,12 +1588,6 @@ body.has-sticky-recorder .sticky-recorder .manual-add-btn{
         </optgroup>
       </select>
     </div>
-      <div class="conv-speed-row">
-        <span class="conv-speed-lbl">🐢</span>
-        <input type="range" id="convSpeedSliderB" min="0.5" max="2.0" step="0.1" value="1.0" oninput="document.getElementById('convSpeedLblB').textContent=parseFloat(this.value).toFixed(1)+'x'">
-        <span class="conv-speed-lbl" id="convSpeedLblB">1.0x</span>
-        <span class="conv-speed-lbl">🐇</span>
-      </div>
     </div>
     <button id="convBtnB" onclick="toggleConversationRec('B')" class="conv-v-recbtn" title="Person B aufnehmen">
       <span class="conv-v-recdot"></span>
@@ -2618,6 +2603,8 @@ function updateConversationChips() {
 function showConversationMode() {
   var panel = document.getElementById('convPanel');
   if (panel) panel.style.display = 'block';
+  var sticky = document.querySelector('.sticky-recorder');
+  if (sticky) sticky.style.display = 'none';
   updateConversationChips();
   tryRestoreConvSession();
   try { window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' }); } catch(e) {}
@@ -2627,6 +2614,8 @@ function hideConversationMode() {
   stopConversationRec();
   var panel = document.getElementById('convPanel');
   if (panel) panel.style.display = 'none';
+  var sticky = document.querySelector('.sticky-recorder');
+  if (sticky) sticky.style.display = '';
   document.body.classList.remove('conv-fullscreen');
 }
 
@@ -2761,8 +2750,7 @@ function translateConversationSide(side, text) {
     if (side === 'A') convLastTranslationA = cached; else convLastTranslationB = cached;
     var autoSpk = document.getElementById('convAutoSpeak');
     if (autoSpk && autoSpk.checked) {
-      var spEl = document.getElementById(side === 'A' ? 'convSpeedSliderB' : 'convSpeedSliderA');
-      speakConversationTranslation(toLang, cached, spEl ? parseFloat(spEl.value) : 1.0);
+      speakConversationTranslation(toLang, cached, 1.0);
     }
     saveConvSession();
     return;
@@ -2803,8 +2791,7 @@ function translateConversationSide(side, text) {
 
       var autoSpeak = document.getElementById('convAutoSpeak');
       if (autoSpeak && autoSpeak.checked && translated) {
-        var speedEl = document.getElementById(side === 'A' ? 'convSpeedSliderB' : 'convSpeedSliderA');
-        speakConversationTranslation(toLang, translated, speedEl ? parseFloat(speedEl.value) : 1.0);
+        speakConversationTranslation(toLang, translated, 1.0);
       }
 
       var autoFlip = document.getElementById('convAutoFlip');
@@ -2838,9 +2825,7 @@ function repeatConversationTranslation(side) {
   if (!text) { toast('Noch keine Übersetzung vorhanden', 'err'); return; }
   // side='B' → Button in Box A → Zuhörer ist A → Speed von A
   // side='A' → Button in Box B → Zuhörer ist B → Speed von B
-  var sliderEl = document.getElementById(side === 'B' ? 'convSpeedSliderA' : 'convSpeedSliderB');
-  var speed = sliderEl ? parseFloat(sliderEl.value) : 1.0;
-  speakConversationTranslation(langName, text, speed);
+  speakConversationTranslation(langName, text, 1.0);
 }
 
 function updateConvHistoryCount() {
