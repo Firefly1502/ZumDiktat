@@ -980,7 +980,9 @@ body.has-sticky-recorder .sticky-recorder .manual-add-btn{
 .conv-v-box-a{background:rgba(123,92,255,0.07);border-color:rgba(123,92,255,0.45);}
 .conv-v-box-b{background:rgba(0,229,160,0.06);border-color:rgba(0,229,160,0.40);margin-bottom:0;}
 .conv-v-inner{padding:14px;min-height:260px;display:flex;flex-direction:column;gap:8px;box-sizing:border-box;transition:transform 0.35s cubic-bezier(.4,0,.2,1);transform-origin:center center;will-change:transform;}
-.conv-v-header{display:flex;align-items:center;gap:7px;flex-shrink:0;}
+.conv-v-header{display:flex;flex-direction:column;gap:5px;flex-shrink:0;}
+.conv-v-header-top{display:flex;align-items:center;gap:6px;}
+.conv-v-header-row{display:flex;align-items:center;gap:7px;}
 .conv-v-label{font-size:11px;font-weight:600;letter-spacing:0.12em;text-transform:uppercase;white-space:nowrap;}
 .conv-v-label-a{color:var(--accent);}
 .conv-v-label-b{color:var(--ok);}
@@ -1461,8 +1463,11 @@ body.has-sticky-recorder .sticky-recorder .manual-add-btn{
 <div class="conv-v-box conv-v-box-a">
   <div class="conv-v-inner" id="convInnerA">
     <div class="conv-v-header">
-      <span class="conv-v-label conv-v-label-a">Person A</span>
-      <span id="convAStatus" class="conv-v-status"></span>
+      <div class="conv-v-header-top">
+        <span class="conv-v-label conv-v-label-a">Person A</span>
+        <span id="convAStatus" class="conv-v-status"></span>
+      </div>
+      <div class="conv-v-header-row">
       <select id="convLangA" class="conv-v-lang" onchange="updateConversationChips()">
         <optgroup label="Europa">
           <option value="Deutsch" selected>🇩🇪 Deutsch</option>
@@ -1519,7 +1524,8 @@ body.has-sticky-recorder .sticky-recorder .manual-add-btn{
         <span class="conv-v-recdot"></span>
       </button>
       <button class="conv-v-rotatebtn" onclick="rotateConvBox('A')" title="Drehen">↻</button>
-    </div>
+      </div><!-- /header-row -->
+    </div><!-- /header -->
     <div class="conv-v-body">
       <div id="convAText" class="conv-v-spoken"></div>
       <div class="conv-v-arrow-row">
@@ -1539,8 +1545,11 @@ body.has-sticky-recorder .sticky-recorder .manual-add-btn{
 <div class="conv-v-box conv-v-box-b">
   <div class="conv-v-inner" id="convInnerB">
     <div class="conv-v-header">
-      <span class="conv-v-label conv-v-label-b">Person B</span>
-      <span id="convBStatus" class="conv-v-status"></span>
+      <div class="conv-v-header-top">
+        <span class="conv-v-label conv-v-label-b">Person B</span>
+        <span id="convBStatus" class="conv-v-status"></span>
+      </div>
+      <div class="conv-v-header-row">
       <select id="convLangB" class="conv-v-lang" onchange="updateConversationChips()">
         <optgroup label="Europa">
           <option value="Deutsch">🇩🇪 Deutsch</option>
@@ -1597,7 +1606,8 @@ body.has-sticky-recorder .sticky-recorder .manual-add-btn{
         <span class="conv-v-recdot"></span>
       </button>
       <button class="conv-v-rotatebtn" onclick="rotateConvBox('B')" title="Drehen">↻</button>
-    </div>
+      </div><!-- /header-row -->
+    </div><!-- /header -->
     <div class="conv-v-body">
       <div id="convBText" class="conv-v-spoken"></div>
       <div class="conv-v-arrow-row">
