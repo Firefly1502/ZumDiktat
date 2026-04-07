@@ -1010,6 +1010,7 @@ body.has-sticky-recorder .sticky-recorder .manual-add-btn{
 .conv-word-popup-word{font-size:14px;font-weight:600;color:var(--accent);margin-bottom:5px;padding-right:20px;}
 .conv-word-popup-close{position:absolute;top:8px;right:10px;background:none;border:none;color:var(--muted);font-size:16px;cursor:pointer;line-height:1;}
 .conv-v-translated{cursor:pointer;}
+.conv-v-word-hint{font-size:10px;color:var(--muted);opacity:0.6;text-align:right;padding-top:2px;pointer-events:none;}
 /* Feature 3: Restore-Banner */
 .conv-restore-banner{display:none;align-items:center;gap:8px;background:rgba(123,92,255,0.1);border:1px solid rgba(123,92,255,0.35);border-radius:10px;padding:8px 12px;font-size:11px;color:var(--muted);margin-bottom:10px;}
 .conv-restore-banner button{background:var(--accent);border:none;border-radius:6px;color:#fff;font-size:11px;padding:4px 10px;cursor:pointer;}
@@ -1529,6 +1530,7 @@ body.has-sticky-recorder .sticky-recorder .manual-add-btn{
         <div id="convBTransMirror" class="conv-v-translated" onclick="handleTransWordTap(event,'A')" title="Wort antippen für Erklärung"></div>
         <button class="conv-v-speakbtn" onclick="repeatConversationTranslation('B')" title="Übersetzung vorlesen">🔊</button>
       </div>
+      <div class="conv-v-word-hint">💡 Wort antippen für Erklärung</div>
     </div>
   </div>
 </div>
@@ -1606,6 +1608,7 @@ body.has-sticky-recorder .sticky-recorder .manual-add-btn{
         <div id="convATrans" class="conv-v-translated" onclick="handleTransWordTap(event,'B')" title="Wort antippen für Erklärung"></div>
         <button class="conv-v-speakbtn" onclick="repeatConversationTranslation('A')" title="Übersetzung vorlesen">🔊</button>
       </div>
+      <div class="conv-v-word-hint">💡 Wort antippen für Erklärung</div>
     </div>
   </div>
 </div>
