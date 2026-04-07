@@ -2711,10 +2711,11 @@ function toggleConversationRec(side) {
   var langName = document.getElementById(side === 'A' ? 'convLangA' : 'convLangB').value;
   var code = CONV_SPEECH_CODES[langName] || 'de-DE';
 
+  var isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
   convRecognition = new SR();
   convRecognition.lang = code;
-  convRecognition.interimResults = true;
-  convRecognition.continuous = true;
+  convRecognition.interimResults = !isSafari;
+  convRecognition.continuous = !isSafari;
   convActiveSpeaker = side;
 
   setConvStatus(side, '🎙 Hört zu…', true);
@@ -2749,13 +2750,31 @@ function toggleConversationRec(side) {
 
   convRecognition.onend = function() {
     if (convActiveSpeaker === side) {
+      // Safari: continuous nicht unterstützt → automatisch neu starten
+      if (isSafari) {
+        try {
+          convRecognition.start();
+          return;
+        } catch(e) {}
+      }
       setConvStatus(side, 'Bereit', false);
       convActiveSpeaker = null;
     }
   };
 
-  convRecognition.onerror = function() {
-    setConvStatus(side, 'Fehler bei Aufnahme', false);
+  convRecognition.onerror = function(ev) {
+    var msg = ev && ev.error ? ev.error : '?';
+    if (msg === 'not-allowed') {
+      setConvStatus(side, 'Mikrofon verweigert', false);
+      toast('Mikrofon-Zugriff verweigert – Einstellungen prüfen', 'err');
+    } else if (msg === 'no-speech') {
+      setConvStatus(side, 'Bereit', false);
+    } else if (msg === 'language-not-supported') {
+      setConvStatus(side, 'Sprache nicht unterstützt', false);
+      toast('Diese Sprache wird vom Browser nicht unterstützt: ' + langName, 'err');
+    } else {
+      setConvStatus(side, 'Fehler: ' + msg, false);
+    }
     convActiveSpeaker = null;
   };
 
