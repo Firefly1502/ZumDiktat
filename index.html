@@ -1856,10 +1856,11 @@ function stopRec(e) {
 function startRecCore() {
   var SR = window.SpeechRecognition || window.webkitSpeechRecognition;
   if (!SR) return;
+  var isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
   recognition = new SR();
   recognition.lang = document.getElementById('inputLangSelect').value || 'de-DE';
-  recognition.continuous = true;
-  recognition.interimResults = true;
+  recognition.continuous = !isSafari;
+  recognition.interimResults = !isSafari;
   recognition.maxAlternatives = 1;
   accFinals = '';
 
@@ -1880,6 +1881,13 @@ function startRecCore() {
       document.getElementById('ptt').classList.add('disabled');
       document.getElementById('pttToggle').classList.add('disabled');
       resetUI(); isRec = false; toggleMode = false;
+      toast('Mikrofon-Zugriff verweigert', 'err');
+    } else if (ev.error === 'no-speech' || ev.error === 'aborted') {
+      // ignorieren – onend startet ggf. neu
+    } else if (ev.error === 'language-not-supported') {
+      toast('Sprache nicht unterstützt', 'err');
+    } else if (ev.error) {
+      toast('Aufnahme-Fehler: ' + ev.error, 'err');
     }
   };
 
@@ -2028,7 +2036,8 @@ if (!segs.length) document.getElementById('finBtn').disabled = true;
 // FINISH — now uses corrStyle + customPrompt
 // =====================================================
 function finish() {
-if (!segs.length || !apiKey) return;
+if (!apiKey) { toast('Bitte zuerst API-Schlüssel speichern', 'err'); return; }
+if (!segs.length) { toast('Noch keine Aufnahme – bitte zuerst diktieren', 'err'); return; }
 var combined = segs.join(' ');
 var btn = document.getElementById('finBtn');
 btn.disabled = true; btn.textContent = 'Korrigiere…';
