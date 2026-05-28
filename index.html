@@ -1856,11 +1856,10 @@ function stopRec(e) {
 function startRecCore() {
   var SR = window.SpeechRecognition || window.webkitSpeechRecognition;
   if (!SR) return;
-  var isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
   recognition = new SR();
   recognition.lang = document.getElementById('inputLangSelect').value || 'de-DE';
-  recognition.continuous = !isSafari;
-  recognition.interimResults = !isSafari;
+  recognition.continuous = true;
+  recognition.interimResults = true;
   recognition.maxAlternatives = 1;
   accFinals = '';
 
