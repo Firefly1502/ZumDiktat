@@ -1652,7 +1652,7 @@ function registerUsage(d){
     usageStats.input += input;
     usageStats.output += output;
     usageStats.total += input + output;
-    usageStats.cost = (usageStats.input/1000000)*3 + (usageStats.output/1000000)*15;
+    usageStats.cost = (usageStats.input/1000000)*2 + (usageStats.output/1000000)*10;
     var el=document.getElementById('apiSessionCost');
     if(el) el.textContent='$'+usageStats.cost.toFixed(4);
   }catch(e){}
