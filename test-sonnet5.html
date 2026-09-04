@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sonnet 5 – Smoke Test</title>
+<style>
+  body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;max-width:720px;margin:24px auto;padding:0 16px;background:#0a0a0f;color:#f2f2f7;}
+  h1{font-size:20px;}
+  input,button,textarea{font:inherit;padding:10px;border-radius:10px;border:1px solid #3a3a44;background:#16161d;color:#f2f2f7;box-sizing:border-box;}
+  input,textarea{width:100%;margin:6px 0;}
+  button{cursor:pointer;background:#2563eb;border-color:#2563eb;font-weight:600;}
+  button:disabled{opacity:.5;cursor:default;}
+  .row{margin:14px 0;}
+  pre{white-space:pre-wrap;background:#16161d;border:1px solid #3a3a44;border-radius:10px;padding:12px;min-height:40px;}
+  .ok{color:#34d399;} .err{color:#f87171;} .muted{color:#9ca3af;font-size:13px;}
+</style>
+</head>
+<body>
+<h1>Sonnet 5 – Smoke Test</h1>
+<p class="muted">Prüft, dass <code>claude-sonnet-5</code> mit <code>thinking:{type:'disabled'}</code> antwortet und der Textblock per <code>type</code> ausgelesen wird (gleiche Logik wie <code>anthropicText()</code> in index.html).</p>
+
+<div class="row">
+  <label>Anthropic API-Key</label>
+  <input id="key" type="password" placeholder="sk-ant-...">
+</div>
+<div class="row">
+  <label>Prompt</label>
+  <textarea id="prompt" rows="3">Antworte nur mit dem Wort: OK</textarea>
+</div>
+<div class="row">
+  <button id="run">Testen</button>
+</div>
+
+<div class="row">
+  <div class="muted">Ausgelesener Text (anthropicText):</div>
+  <pre id="out">–</pre>
+</div>
+<div class="row">
+  <div class="muted">Roh-Antwort:</div>
+  <pre id="raw">–</pre>
+</div>
+
+<script>
+// Identisch zur Logik in index.html: ersten Textblock per type lesen.
+function anthropicText(d){
+  try{
+    if(!d || !Array.isArray(d.content)) return '';
+    for(var i=0;i<d.content.length;i++){
+      if(d.content[i] && d.content[i].type==='text' && typeof d.content[i].text==='string'){
+        return d.content[i].text.trim();
+      }
+    }
+  }catch(e){}
+  return '';
+}
+
+document.getElementById('run').addEventListener('click', function(){
+  var btn = this;
+  var key = document.getElementById('key').value.trim();
+  var prompt = document.getElementById('prompt').value;
+  var out = document.getElementById('out');
+  var raw = document.getElementById('raw');
+  if(!key){ out.textContent='Kein API-Key.'; out.className='err'; return; }
+  btn.disabled = true; out.className=''; out.textContent='…'; raw.textContent='…';
+  fetch('https://api.anthropic.com/v1/messages', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'x-api-key': key,
+      'anthropic-version': '2023-06-01',
+      'anthropic-dangerous-direct-browser-access': 'true'
+    },
+    body: JSON.stringify({
+      model: 'claude-sonnet-5',
+      max_tokens: 100,
+      thinking: {type:'disabled'},
+      messages: [{ role: 'user', content: prompt }]
+    })
+  }).then(function(r){ return r.json(); })
+    .then(function(d){
+      raw.textContent = JSON.stringify(d, null, 2);
+      var t = anthropicText(d);
+      out.textContent = t || '(leer)';
+      out.className = t ? 'ok' : 'err';
+    })
+    .catch(function(e){
+      out.textContent = 'Fehler: ' + e.message; out.className='err';
+    })
+    .finally(function(){ btn.disabled = false; });
+});
+</script>
+</body>
+</html>

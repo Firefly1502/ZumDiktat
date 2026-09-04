@@ -1652,10 +1652,24 @@ function registerUsage(d){
     usageStats.input += input;
     usageStats.output += output;
     usageStats.total += input + output;
-    usageStats.cost = (usageStats.input/1000000)*3 + (usageStats.output/1000000)*15;
+    usageStats.cost = (usageStats.input/1000000)*2 + (usageStats.output/1000000)*10;
     var el=document.getElementById('apiSessionCost');
     if(el) el.textContent='$'+usageStats.cost.toFixed(4);
   }catch(e){}
+}
+
+// Liest den ersten Textblock aus einer Anthropic-Antwort per type.
+// Mit thinking-Bloecken kann content[0] ein anderer Typ sein, daher nach type==='text' suchen.
+function anthropicText(d){
+  try{
+    if(!d || !Array.isArray(d.content)) return '';
+    for(var i=0;i<d.content.length;i++){
+      if(d.content[i] && d.content[i].type==='text' && typeof d.content[i].text==='string'){
+        return d.content[i].text.trim();
+      }
+    }
+  }catch(e){}
+  return '';
 }
 
 // =====================================================
@@ -2065,7 +2079,7 @@ headers: {
 'anthropic-dangerous-direct-browser-access': 'true'
 },
 body: JSON.stringify({
-model: 'claude-sonnet-4-20250514', max_tokens: 2000,
+model: 'claude-sonnet-5', max_tokens: 2600, thinking: {type:'disabled'},
 messages: [{role:'user', content:
 'Du korrigierst einen diktierten Text. Sprache: ' + langName + '. Stil: ' + styleTxt + '.\n\n' +
 'Deine Aufgaben:\n' +
@@ -2078,17 +2092,26 @@ extraLine + '\n\nText:\n\n' + combined
 }]
 })
 }).then(function(r) {
-if (!r.ok) throw new Error('HTTP ' + r.status);
-return r.json();
+return r.json().catch(function(){ return {}; }).then(function(d) {
+if (!r.ok) throw new Error((d && d.error && d.error.message) ? d.error.message : ('HTTP ' + r.status));
+return d;
+});
 }).then(function(d) {
 registerUsage(d);
-corrected = (d.content && d.content[0] && d.content[0].text) ? d.content[0].text.trim() : combined;
+corrected = anthropicText(d) || combined;
 document.getElementById('resText').textContent = corrected;
+document.getElementById('resText').style.color = 'var(--text)';
 document.getElementById('resCard').classList.remove('hidden');
 document.getElementById('resCard').scrollIntoView({behavior:'smooth', block:'start'});
 toast('Text korrigiert', 'ok');
 }).catch(function(err) {
-toast('Fehler: ' + err.message, 'err');
+var msg = (err && err.message) ? err.message : 'Unbekannter Fehler';
+var rt = document.getElementById('resText');
+rt.textContent = 'Fehler bei der Korrektur:\n\n' + msg;
+rt.style.color = 'var(--rec)';
+document.getElementById('resCard').classList.remove('hidden');
+document.getElementById('resCard').scrollIntoView({behavior:'smooth', block:'start'});
+toast('Fehler: ' + msg, 'err');
 }).finally(function() {
 btn.disabled = false; btn.textContent = '\u2736 Fertigstellen & Korrigieren';
 });
@@ -2112,13 +2135,13 @@ headers: {
 'anthropic-dangerous-direct-browser-access': 'true'
 },
 body: JSON.stringify({
-model: 'claude-sonnet-4-20250514', max_tokens: 2000,
+model: 'claude-sonnet-5', max_tokens: 2600, thinking: {type:'disabled'},
 messages: [{role:'user', content:'Uebersetze den folgenden Text ins ' + lang + '. Gib NUR die Uebersetzung zurueck:\n\n' + corrected}]
 })
 }).then(function(r) { return r.json(); })
 .then(function(d) {
 registerUsage(d);
-document.getElementById('resText').textContent = (d.content && d.content[0] && d.content[0].text) ? d.content[0].text.trim() : '';
+document.getElementById('resText').textContent = anthropicText(d);
 toast('Uebersetzt', 'ok');
 }).catch(function() { toast('Uebersetzung fehlgeschlagen', 'err'); })
 .finally(function() { btn.disabled = false; btn.textContent = 'Uebersetzen'; });
@@ -2331,13 +2354,13 @@ headers: {
 'anthropic-dangerous-direct-browser-access': 'true'
 },
 body: JSON.stringify({
-model: 'claude-sonnet-4-20250514', max_tokens: 1000,
+model: 'claude-sonnet-5', max_tokens: 1300, thinking: {type:'disabled'},
 messages: [{role:'user', content: prompt}]
 })
 }).then(function(r) { return r.json(); })
 .then(function(d) {
 registerUsage(d);
-var result = (d.content && d.content[0] && d.content[0].text) ? d.content[0].text.trim() : '';
+var result = anthropicText(d);
 document.getElementById('ltTgtText').textContent = result || 'Keine Übersetzung';
 document.getElementById('ltTgtText').style.color = 'var(--text)';
 }).catch(function() {
@@ -2532,15 +2555,16 @@ function summarizeSegments() {
       'anthropic-dangerous-direct-browser-access': 'true'
     },
     body: JSON.stringify({
-      model: 'claude-sonnet-4-20250514',
-      max_tokens: 1500,
+      model: 'claude-sonnet-5',
+      max_tokens: 2000,
+      thinking: {type:'disabled'},
       messages: [{ role: 'user', content: prompt }]
     })
   }).then(function(r) {
     return r.json();
   }).then(function(d) {
     registerUsage(d);
-    var result = (d.content && d.content[0] && d.content[0].text) ? d.content[0].text.trim() : '';
+    var result = anthropicText(d);
     var resCard = document.getElementById('resCard');
     var resText = document.getElementById('resText');
     if (resCard) resCard.classList.remove('hidden');
@@ -2838,14 +2862,15 @@ function translateConversationSide(side, text) {
       'anthropic-dangerous-direct-browser-access': 'true'
     },
     body: JSON.stringify({
-      model: 'claude-sonnet-4-20250514',
-      max_tokens: 600,
+      model: 'claude-sonnet-5',
+      max_tokens: 800,
+      thinking: {type:'disabled'},
       messages: [{ role: 'user', content: prompt }]
     })
   }).then(function(r) { return r.json(); })
     .then(function(d) {
       registerUsage(d);
-      var translated = (d.content && d.content[0] && d.content[0].text) ? d.content[0].text.trim() : '';
+      var translated = anthropicText(d);
       if (outEl) {
         outEl.textContent = translated || 'Keine Übersetzung erhalten';
         outEl.style.color = 'var(--text)';
