@@ -2645,8 +2645,10 @@ var convLastTranslationA = '';
 var convLastTranslationB = '';
 
 // ── Lokalisierbare Box-Beschriftungen (Gesprächsmodus) ──
-// Kanonische Quelle = Deutsch. Andere Sprachen werden bei Bedarf per API
-// übersetzt und dauerhaft in localStorage zwischengespeichert (1 Call je Sprache).
+// Jede Box wird in ihrer eigenen gewählten Sprache beschriftet. Alle Sprachen
+// der Auswahlliste sind fest hinterlegt (CONV_UI_LABELS) – funktioniert sofort,
+// offline und ohne API-Schlüssel. Nicht hinterlegte Sprachen werden – falls ein
+// Schlüssel vorhanden ist – einmalig per API übersetzt und in localStorage gecacht.
 var CONV_UI_LABELS_DE = {
   person: 'Person',
   ready: 'Bereit',
@@ -2662,20 +2664,51 @@ var CONV_UI_LABELS_DE = {
   cantStart: 'Konnte nicht starten',
   errorPrefix: 'Fehler:'
 };
-var CONV_UI_LABELS_EN = {
-  person: 'Person',
-  ready: 'Ready',
-  listening: '🎙 Listening…',
-  transFor: 'Translation for',
-  wordHint: 'Tap a word for an explanation',
-  hold: 'Hold to speak',
-  holdActive: 'Release to stop',
-  clear: 'Clear',
-  clearTitle: 'Clear what was said',
-  micDenied: 'Microphone denied',
-  langUnsupported: 'Language not supported',
-  cantStart: 'Could not start',
-  errorPrefix: 'Error:'
+// Statisches Wörterbuch für alle Sprachen der Auswahlliste.
+// Reihenfolge der Schlüssel wie in CONV_UI_LABELS_DE.
+var CONV_UI_LABELS = {
+  'Deutsch': CONV_UI_LABELS_DE,
+  'Englisch': { person:'Person', ready:'Ready', listening:'🎙 Listening…', transFor:'Translation for', wordHint:'Tap a word for an explanation', hold:'Hold to speak', holdActive:'Release to stop', clear:'Clear', clearTitle:'Clear what was said', micDenied:'Microphone denied', langUnsupported:'Language not supported', cantStart:'Could not start', errorPrefix:'Error:' },
+  'Französisch': { person:'Personne', ready:'Prêt', listening:'🎙 Écoute…', transFor:'Traduction pour', wordHint:'Touchez un mot pour l\'explication', hold:'Maintenir pour parler', holdActive:'Relâcher pour arrêter', clear:'Effacer', clearTitle:'Effacer ce qui a été dit', micDenied:'Micro refusé', langUnsupported:'Langue non prise en charge', cantStart:'Impossible de démarrer', errorPrefix:'Erreur :' },
+  'Spanisch': { person:'Persona', ready:'Listo', listening:'🎙 Escuchando…', transFor:'Traducción para', wordHint:'Toca una palabra para ver la explicación', hold:'Mantén pulsado para hablar', holdActive:'Suelta para detener', clear:'Borrar', clearTitle:'Borrar lo dicho', micDenied:'Micrófono denegado', langUnsupported:'Idioma no compatible', cantStart:'No se pudo iniciar', errorPrefix:'Error:' },
+  'Italienisch': { person:'Persona', ready:'Pronto', listening:'🎙 In ascolto…', transFor:'Traduzione per', wordHint:'Tocca una parola per la spiegazione', hold:'Tieni premuto per parlare', holdActive:'Rilascia per fermare', clear:'Cancella', clearTitle:'Cancella quanto detto', micDenied:'Microfono negato', langUnsupported:'Lingua non supportata', cantStart:'Impossibile avviare', errorPrefix:'Errore:' },
+  'Portugiesisch': { person:'Pessoa', ready:'Pronto', listening:'🎙 A ouvir…', transFor:'Tradução para', wordHint:'Toque numa palavra para ver a explicação', hold:'Manter para falar', holdActive:'Soltar para parar', clear:'Limpar', clearTitle:'Limpar o que foi dito', micDenied:'Microfone recusado', langUnsupported:'Idioma não suportado', cantStart:'Não foi possível iniciar', errorPrefix:'Erro:' },
+  'Niederländisch': { person:'Persoon', ready:'Klaar', listening:'🎙 Luistert…', transFor:'Vertaling voor', wordHint:'Tik op een woord voor uitleg', hold:'Ingedrukt houden om te spreken', holdActive:'Loslaten om te stoppen', clear:'Wissen', clearTitle:'Wis het gesprokene', micDenied:'Microfoon geweigerd', langUnsupported:'Taal niet ondersteund', cantStart:'Kon niet starten', errorPrefix:'Fout:' },
+  'Polnisch': { person:'Osoba', ready:'Gotowe', listening:'🎙 Słucham…', transFor:'Tłumaczenie dla', wordHint:'Dotknij słowa, aby zobaczyć wyjaśnienie', hold:'Przytrzymaj, aby mówić', holdActive:'Puść, aby zatrzymać', clear:'Wyczyść', clearTitle:'Wyczyść wypowiedź', micDenied:'Odmowa dostępu do mikrofonu', langUnsupported:'Język nieobsługiwany', cantStart:'Nie można uruchomić', errorPrefix:'Błąd:' },
+  'Russisch': { person:'Человек', ready:'Готово', listening:'🎙 Слушаю…', transFor:'Перевод для', wordHint:'Коснитесь слова для пояснения', hold:'Удерживайте, чтобы говорить', holdActive:'Отпустите, чтобы остановить', clear:'Очистить', clearTitle:'Очистить сказанное', micDenied:'Доступ к микрофону запрещён', langUnsupported:'Язык не поддерживается', cantStart:'Не удалось запустить', errorPrefix:'Ошибка:' },
+  'Ukrainisch': { person:'Людина', ready:'Готово', listening:'🎙 Слухаю…', transFor:'Переклад для', wordHint:'Торкніться слова для пояснення', hold:'Утримуйте, щоб говорити', holdActive:'Відпустіть, щоб зупинити', clear:'Очистити', clearTitle:'Очистити сказане', micDenied:'Доступ до мікрофона заборонено', langUnsupported:'Мова не підтримується', cantStart:'Не вдалося запустити', errorPrefix:'Помилка:' },
+  'Schwedisch': { person:'Person', ready:'Klar', listening:'🎙 Lyssnar…', transFor:'Översättning för', wordHint:'Tryck på ett ord för förklaring', hold:'Håll in för att tala', holdActive:'Släpp för att stoppa', clear:'Rensa', clearTitle:'Rensa det sagda', micDenied:'Mikrofon nekad', langUnsupported:'Språket stöds inte', cantStart:'Kunde inte starta', errorPrefix:'Fel:' },
+  'Norwegisch': { person:'Person', ready:'Klar', listening:'🎙 Lytter…', transFor:'Oversettelse for', wordHint:'Trykk på et ord for forklaring', hold:'Hold inne for å snakke', holdActive:'Slipp for å stoppe', clear:'Tøm', clearTitle:'Tøm det sagte', micDenied:'Mikrofon avvist', langUnsupported:'Språket støttes ikke', cantStart:'Kunne ikke starte', errorPrefix:'Feil:' },
+  'Dänisch': { person:'Person', ready:'Klar', listening:'🎙 Lytter…', transFor:'Oversættelse for', wordHint:'Tryk på et ord for forklaring', hold:'Hold nede for at tale', holdActive:'Slip for at stoppe', clear:'Ryd', clearTitle:'Ryd det sagte', micDenied:'Mikrofon nægtet', langUnsupported:'Sproget understøttes ikke', cantStart:'Kunne ikke starte', errorPrefix:'Fejl:' },
+  'Finnisch': { person:'Henkilö', ready:'Valmis', listening:'🎙 Kuuntelee…', transFor:'Käännös kielelle', wordHint:'Napauta sanaa nähdäksesi selityksen', hold:'Pidä painettuna puhuaksesi', holdActive:'Vapauta lopettaaksesi', clear:'Tyhjennä', clearTitle:'Tyhjennä sanottu', micDenied:'Mikrofoni estetty', langUnsupported:'Kieltä ei tueta', cantStart:'Käynnistys epäonnistui', errorPrefix:'Virhe:' },
+  'Griechisch': { person:'Άτομο', ready:'Έτοιμο', listening:'🎙 Ακούει…', transFor:'Μετάφραση για', wordHint:'Πατήστε μια λέξη για εξήγηση', hold:'Κρατήστε για ομιλία', holdActive:'Αφήστε για διακοπή', clear:'Εκκαθάριση', clearTitle:'Εκκαθάριση όσων ειπώθηκαν', micDenied:'Άρνηση μικροφώνου', langUnsupported:'Η γλώσσα δεν υποστηρίζεται', cantStart:'Αδυναμία εκκίνησης', errorPrefix:'Σφάλμα:' },
+  'Rumänisch': { person:'Persoană', ready:'Gata', listening:'🎙 Ascultă…', transFor:'Traducere pentru', wordHint:'Atinge un cuvânt pentru explicație', hold:'Ține apăsat pentru a vorbi', holdActive:'Eliberează pentru a opri', clear:'Șterge', clearTitle:'Șterge ce s-a spus', micDenied:'Microfon refuzat', langUnsupported:'Limbă neacceptată', cantStart:'Nu s-a putut porni', errorPrefix:'Eroare:' },
+  'Tschechisch': { person:'Osoba', ready:'Připraveno', listening:'🎙 Poslouchá…', transFor:'Překlad pro', wordHint:'Klepněte na slovo pro vysvětlení', hold:'Podržte pro mluvení', holdActive:'Uvolněte pro zastavení', clear:'Vymazat', clearTitle:'Vymazat řečené', micDenied:'Mikrofon odmítnut', langUnsupported:'Jazyk není podporován', cantStart:'Nelze spustit', errorPrefix:'Chyba:' },
+  'Ungarisch': { person:'Személy', ready:'Kész', listening:'🎙 Hallgat…', transFor:'Fordítás ide:', wordHint:'Érintsen meg egy szót a magyarázathoz', hold:'Tartsa lenyomva a beszédhez', holdActive:'Engedje el a leállításhoz', clear:'Törlés', clearTitle:'Az elmondottak törlése', micDenied:'Mikrofon elutasítva', langUnsupported:'A nyelv nem támogatott', cantStart:'Nem sikerült elindítani', errorPrefix:'Hiba:' },
+  'Albanisch': { person:'Person', ready:'Gati', listening:'🎙 Duke dëgjuar…', transFor:'Përkthimi për', wordHint:'Prekni një fjalë për shpjegim', hold:'Mbani shtypur për të folur', holdActive:'Lëshoni për të ndaluar', clear:'Pastro', clearTitle:'Pastro të thënat', micDenied:'Mikrofoni u refuzua', langUnsupported:'Gjuha nuk mbështetet', cantStart:'Nuk mund të nisej', errorPrefix:'Gabim:' },
+  'Kroatisch': { person:'Osoba', ready:'Spremno', listening:'🎙 Sluša…', transFor:'Prijevod za', wordHint:'Dodirnite riječ za objašnjenje', hold:'Držite za govor', holdActive:'Pustite za zaustavljanje', clear:'Očisti', clearTitle:'Očisti izgovoreno', micDenied:'Mikrofon odbijen', langUnsupported:'Jezik nije podržan', cantStart:'Nije moguće pokrenuti', errorPrefix:'Pogreška:' },
+  'Serbisch': { person:'Особа', ready:'Спремно', listening:'🎙 Слуша…', transFor:'Превод за', wordHint:'Додирните реч за објашњење', hold:'Држите да говорите', holdActive:'Пустите да зауставите', clear:'Обриши', clearTitle:'Обриши изговорено', micDenied:'Микрофон одбијен', langUnsupported:'Језик није подржан', cantStart:'Није могуће покренути', errorPrefix:'Грешка:' },
+  'Slowakisch': { person:'Osoba', ready:'Pripravené', listening:'🎙 Počúva…', transFor:'Preklad pre', wordHint:'Ťuknite na slovo pre vysvetlenie', hold:'Podržte pre hovorenie', holdActive:'Uvoľnite pre zastavenie', clear:'Vymazať', clearTitle:'Vymazať povedané', micDenied:'Mikrofón zamietnutý', langUnsupported:'Jazyk nie je podporovaný', cantStart:'Nepodarilo sa spustiť', errorPrefix:'Chyba:' },
+  'Bulgarisch': { person:'Човек', ready:'Готово', listening:'🎙 Слуша…', transFor:'Превод за', wordHint:'Докоснете дума за обяснение', hold:'Задръжте, за да говорите', holdActive:'Пуснете, за да спрете', clear:'Изчисти', clearTitle:'Изчисти казаното', micDenied:'Достъпът до микрофона е отказан', langUnsupported:'Езикът не се поддържа', cantStart:'Неуспешно стартиране', errorPrefix:'Грешка:' },
+  'Türkisch': { person:'Kişi', ready:'Hazır', listening:'🎙 Dinliyor…', transFor:'Çeviri', wordHint:'Açıklama için bir kelimeye dokunun', hold:'Konuşmak için basılı tutun', holdActive:'Durdurmak için bırakın', clear:'Temizle', clearTitle:'Söylenenleri temizle', micDenied:'Mikrofon reddedildi', langUnsupported:'Dil desteklenmiyor', cantStart:'Başlatılamadı', errorPrefix:'Hata:' },
+  'Arabisch': { person:'شخص', ready:'جاهز', listening:'🎙 يستمع…', transFor:'الترجمة لـ', wordHint:'انقر على كلمة لعرض الشرح', hold:'اضغط مع الاستمرار للتحدث', holdActive:'حرّر للإيقاف', clear:'مسح', clearTitle:'مسح ما قيل', micDenied:'تم رفض الميكروفون', langUnsupported:'اللغة غير مدعومة', cantStart:'تعذّر البدء', errorPrefix:'خطأ:' },
+  'Persisch': { person:'شخص', ready:'آماده', listening:'🎙 در حال شنیدن…', transFor:'ترجمه برای', wordHint:'برای توضیح روی یک کلمه ضربه بزنید', hold:'برای صحبت نگه دارید', holdActive:'برای توقف رها کنید', clear:'پاک کردن', clearTitle:'پاک کردن گفته‌ها', micDenied:'میکروفون رد شد', langUnsupported:'زبان پشتیبانی نمی‌شود', cantStart:'شروع نشد', errorPrefix:'خطا:' },
+  'Hebräisch': { person:'אדם', ready:'מוכן', listening:'🎙 מקשיב…', transFor:'תרגום עבור', wordHint:'הקש על מילה להסבר', hold:'החזק כדי לדבר', holdActive:'שחרר כדי לעצור', clear:'נקה', clearTitle:'נקה את הנאמר', micDenied:'הגישה למיקרופון נדחתה', langUnsupported:'השפה אינה נתמכת', cantStart:'לא ניתן להתחיל', errorPrefix:'שגיאה:' },
+  'Chinesisch vereinfacht': { person:'发言人', ready:'就绪', listening:'🎙 正在聆听…', transFor:'翻译给', wordHint:'点按词语查看解释', hold:'按住说话', holdActive:'松开停止', clear:'清除', clearTitle:'清除所说内容', micDenied:'麦克风被拒绝', langUnsupported:'不支持该语言', cantStart:'无法启动', errorPrefix:'错误：' },
+  'Chinesisch traditionell': { person:'發言人', ready:'就緒', listening:'🎙 正在聆聽…', transFor:'翻譯給', wordHint:'點按詞語查看解釋', hold:'按住說話', holdActive:'放開停止', clear:'清除', clearTitle:'清除所說內容', micDenied:'麥克風被拒絕', langUnsupported:'不支援該語言', cantStart:'無法啟動', errorPrefix:'錯誤：' },
+  'Japanisch': { person:'話者', ready:'準備完了', listening:'🎙 聞き取り中…', transFor:'翻訳先', wordHint:'単語をタップで説明', hold:'押して話す', holdActive:'離して停止', clear:'消去', clearTitle:'発言を消去', micDenied:'マイクが拒否されました', langUnsupported:'この言語は未対応です', cantStart:'開始できませんでした', errorPrefix:'エラー:' },
+  'Koreanisch': { person:'화자', ready:'준비됨', listening:'🎙 듣는 중…', transFor:'번역 대상:', wordHint:'단어를 탭하면 설명', hold:'눌러서 말하기', holdActive:'놓으면 정지', clear:'지우기', clearTitle:'말한 내용 지우기', micDenied:'마이크 거부됨', langUnsupported:'지원되지 않는 언어', cantStart:'시작할 수 없음', errorPrefix:'오류:' },
+  'Hindi': { person:'व्यक्ति', ready:'तैयार', listening:'🎙 सुन रहा है…', transFor:'अनुवाद के लिए', wordHint:'समझने के लिए किसी शब्द पर टैप करें', hold:'बोलने के लिए दबाए रखें', holdActive:'रोकने के लिए छोड़ें', clear:'साफ़ करें', clearTitle:'कही गई बात साफ़ करें', micDenied:'माइक्रोफ़ोन अस्वीकृत', langUnsupported:'भाषा समर्थित नहीं', cantStart:'शुरू नहीं हो सका', errorPrefix:'त्रुटि:' },
+  'Bengali': { person:'ব্যক্তি', ready:'প্রস্তুত', listening:'🎙 শুনছে…', transFor:'অনুবাদ', wordHint:'ব্যাখ্যার জন্য একটি শব্দে ট্যাপ করুন', hold:'কথা বলতে ধরে রাখুন', holdActive:'থামাতে ছেড়ে দিন', clear:'মুছুন', clearTitle:'যা বলা হয়েছে মুছুন', micDenied:'মাইক্রোফোন প্রত্যাখ্যাত', langUnsupported:'ভাষা সমর্থিত নয়', cantStart:'শুরু করা যায়নি', errorPrefix:'ত্রুটি:' },
+  'Urdu': { person:'شخص', ready:'تیار', listening:'🎙 سن رہا ہے…', transFor:'ترجمہ برائے', wordHint:'وضاحت کے لیے کسی لفظ پر ٹیپ کریں', hold:'بولنے کے لیے دبائے رکھیں', holdActive:'روکنے کے لیے چھوڑ دیں', clear:'صاف کریں', clearTitle:'کہی گئی بات صاف کریں', micDenied:'مائیکروفون مسترد', langUnsupported:'زبان معاون نہیں', cantStart:'شروع نہیں ہو سکا', errorPrefix:'خرابی:' },
+  'Vietnamesisch': { person:'Người', ready:'Sẵn sàng', listening:'🎙 Đang nghe…', transFor:'Bản dịch cho', wordHint:'Chạm vào một từ để xem giải thích', hold:'Giữ để nói', holdActive:'Thả để dừng', clear:'Xóa', clearTitle:'Xóa nội dung đã nói', micDenied:'Micrô bị từ chối', langUnsupported:'Ngôn ngữ không được hỗ trợ', cantStart:'Không thể bắt đầu', errorPrefix:'Lỗi:' },
+  'Thailändisch': { person:'บุคคล', ready:'พร้อม', listening:'🎙 กำลังฟัง…', transFor:'การแปลสำหรับ', wordHint:'แตะคำเพื่อดูคำอธิบาย', hold:'กดค้างเพื่อพูด', holdActive:'ปล่อยเพื่อหยุด', clear:'ล้าง', clearTitle:'ล้างสิ่งที่พูด', micDenied:'ไมโครโฟนถูกปฏิเสธ', langUnsupported:'ไม่รองรับภาษานี้', cantStart:'เริ่มไม่ได้', errorPrefix:'ข้อผิดพลาด:' },
+  'Indonesisch': { person:'Orang', ready:'Siap', listening:'🎙 Mendengarkan…', transFor:'Terjemahan untuk', wordHint:'Ketuk kata untuk penjelasan', hold:'Tahan untuk berbicara', holdActive:'Lepas untuk berhenti', clear:'Hapus', clearTitle:'Hapus yang diucapkan', micDenied:'Mikrofon ditolak', langUnsupported:'Bahasa tidak didukung', cantStart:'Tidak dapat memulai', errorPrefix:'Kesalahan:' },
+  'Malaiisch': { person:'Orang', ready:'Sedia', listening:'🎙 Mendengar…', transFor:'Terjemahan untuk', wordHint:'Ketik perkataan untuk penjelasan', hold:'Tahan untuk bercakap', holdActive:'Lepas untuk berhenti', clear:'Kosongkan', clearTitle:'Kosongkan yang diucapkan', micDenied:'Mikrofon ditolak', langUnsupported:'Bahasa tidak disokong', cantStart:'Tidak dapat bermula', errorPrefix:'Ralat:' },
+  'Philippinisch': { person:'Tao', ready:'Handa', listening:'🎙 Nakikinig…', transFor:'Pagsasalin para kay', wordHint:'I-tap ang salita para sa paliwanag', hold:'Pindutin nang matagal para magsalita', holdActive:'Bitawan para huminto', clear:'Burahin', clearTitle:'Burahin ang sinabi', micDenied:'Tinanggihan ang mikropono', langUnsupported:'Hindi suportado ang wika', cantStart:'Hindi makapagsimula', errorPrefix:'Error:' },
+  'Suaheli': { person:'Mtu', ready:'Tayari', listening:'🎙 Inasikiliza…', transFor:'Tafsiri kwa', wordHint:'Gusa neno kwa maelezo', hold:'Shikilia ili kuzungumza', holdActive:'Achia ili kusimamisha', clear:'Futa', clearTitle:'Futa yaliyosemwa', micDenied:'Kipaza sauti kimekataliwa', langUnsupported:'Lugha haitumiki', cantStart:'Imeshindwa kuanza', errorPrefix:'Hitilafu:' },
+  'Amharisch': { person:'ሰው', ready:'ዝግጁ', listening:'🎙 በማዳመጥ ላይ…', transFor:'ትርጉም ለ', wordHint:'ማብራሪያ ለማግኘት ቃል ይንኩ', hold:'ለመናገር ተጭነው ይያዙ', holdActive:'ለማቆም ይልቀቁ', clear:'አጽዳ', clearTitle:'የተባለውን አጽዳ', micDenied:'ማይክሮፎን ተከልክሏል', langUnsupported:'ቋንቋ አይደገፍም', cantStart:'መጀመር አልተቻለም', errorPrefix:'ስህተት:' },
+  'Brasilianisches Portugiesisch': { person:'Pessoa', ready:'Pronto', listening:'🎙 Ouvindo…', transFor:'Tradução para', wordHint:'Toque em uma palavra para ver a explicação', hold:'Segure para falar', holdActive:'Solte para parar', clear:'Limpar', clearTitle:'Limpar o que foi dito', micDenied:'Microfone negado', langUnsupported:'Idioma não suportado', cantStart:'Não foi possível iniciar', errorPrefix:'Erro:' }
 };
 var convLabelFetching = {};
 function getConvLabelCache() {
@@ -2685,8 +2718,7 @@ function saveConvLabelCache(c) {
   try { localStorage.setItem('dk_conv_ui_labels', JSON.stringify(c)); } catch(e) {}
 }
 function getConvBundle(lang) {
-  if (lang === 'Deutsch') return CONV_UI_LABELS_DE;
-  if (lang === 'Englisch') return CONV_UI_LABELS_EN;
+  if (CONV_UI_LABELS[lang]) return CONV_UI_LABELS[lang];
   var cache = getConvLabelCache();
   return cache[lang] || null;
 }
@@ -2717,13 +2749,17 @@ function applyConvBoxLabels(side) {
   }
   if (convActiveSpeaker !== side) {
     var st = document.getElementById(side === 'A' ? 'convAStatus' : 'convBStatus');
-    if (st && (!st.textContent || st.textContent === CONV_UI_LABELS_DE.ready || st.textContent === CONV_UI_LABELS_EN.ready)) {
-      st.textContent = b.ready;
+    // Nur setzen, wenn leer oder aktuell ein (anderssprachiges) "Bereit" – Fehlertexte nicht überschreiben.
+    var cur = st ? st.textContent : '';
+    var isReady = !cur;
+    if (cur) {
+      for (var k in CONV_UI_LABELS) { if (CONV_UI_LABELS[k].ready === cur) { isReady = true; break; } }
     }
+    if (st && isReady) st.textContent = b.ready;
   }
 }
 function fetchConvLabels(lang) {
-  if (!lang || lang === 'Deutsch' || lang === 'Englisch') return;
+  if (!lang || CONV_UI_LABELS[lang]) return;
   if (convLabelFetching[lang]) return;
   if (getConvLabelCache()[lang]) return;
   if (!apiKey) return; // ohne Schlüssel bleibt es bei Deutsch als Fallback

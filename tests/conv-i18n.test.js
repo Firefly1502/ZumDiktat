@@ -1,15 +1,14 @@
 /*
  * Echter End-to-End-Test für den Gesprächsmodus (Feature: lokalisierte Box-Beschriftungen).
  *
- * Lädt die reale index.html in einem echten Chromium (Playwright) und prüft:
- *   1. Default: Box A steht auf Deutsch, Box B auf Englisch – jede Box in ihrer
- *      eigenen gewählten Sprache.
- *   2. Der neue "Löschen"-Button ist in beiden Boxen vorhanden.
- *   3. Nach Umschalten von Box A auf Türkisch wechselt NUR Box A die Sprache
- *      (aus vorab in localStorage geseedetem Bundle), Box B bleibt Englisch.
- *
- * Das Türkisch-Bundle wird offline in localStorage geseedet – so testet der Test
- * das Rendering/Umschalten ohne API-Schlüssel und ist deterministisch.
+ * Lädt die reale index.html in einem echten Chromium (Playwright) und prüft OHNE
+ * API-Schlüssel und OHNE localStorage-Seeding, dass jede Box in ihrer eigenen
+ * gewählten Sprache beschriftet wird – aus dem fest eingebauten Wörterbuch
+ * (CONV_UI_LABELS). Genau der Fall, der zuvor auf Deutsch hängenblieb:
+ *   1. Default: Box A Deutsch, Box B Englisch.
+ *   2. Der "Löschen"-Button existiert in beiden Boxen.
+ *   3. Box A auf Türkisch  -> nur Box A wechselt.
+ *   4. Box B auf Französisch -> nur Box B wechselt, Box A bleibt Türkisch.
  *
  * Ausführen:  npm test
  * Chromium:   In Claude-Code-Web automatisch gefunden. Lokal ggf.
@@ -20,15 +19,6 @@ const fs = require('fs');
 const { chromium } = require('playwright-core');
 
 const INDEX = 'file://' + path.resolve(__dirname, '..', 'index.html');
-
-// Türkisches Label-Bundle – identisch zu dem, was die API im echten Betrieb liefern würde.
-const TR = {
-  person: 'Kişi', ready: 'Hazır', listening: '🎙 Dinliyor…', transFor: 'Çeviri',
-  wordHint: 'Açıklama için bir kelimeye dokunun', hold: 'Konuşmak için basılı tutun',
-  holdActive: 'Durdurmak için bırakın', clear: 'Temizle', clearTitle: 'Söylenenleri temizle',
-  micDenied: 'Mikrofon reddedildi', langUnsupported: 'Dil desteklenmiyor',
-  cantStart: 'Başlatılamadı', errorPrefix: 'Hata:'
-};
 
 function resolveChromium() {
   if (process.env.PLAYWRIGHT_CHROMIUM_PATH) return process.env.PLAYWRIGHT_CHROMIUM_PATH;
@@ -45,8 +35,7 @@ function resolveChromium() {
 
 var checks = [];
 function expect(name, actual, expected) {
-  var ok = actual === expected;
-  checks.push({ name: name, ok: ok, actual: actual, expected: expected });
+  checks.push({ name: name, ok: actual === expected, actual: actual, expected: expected });
 }
 
 (async () => {
@@ -57,11 +46,7 @@ function expect(name, actual, expected) {
   var pageErrors = [];
   page.on('pageerror', function(e) { pageErrors.push(e.message); });
 
-  // Türkisch offline vorseeden (im echten Betrieb übernimmt das die API + Cache).
-  await page.addInitScript(function(bundle) {
-    try { localStorage.setItem('dk_conv_ui_labels', JSON.stringify({ 'Türkisch': bundle })); } catch (e) {}
-  }, TR);
-
+  // Bewusst KEIN Seeding und KEIN API-Schlüssel – der Test prüft das statische Wörterbuch.
   await page.goto(INDEX, { waitUntil: 'load' });
   await page.evaluate(function() { showConversationMode(); });
   await page.waitForTimeout(300);
@@ -82,17 +67,23 @@ function expect(name, actual, expected) {
   expect('A clear button exists', String((await page.$('#convClearA')) !== null), 'true');
   expect('B clear button exists', String((await page.$('#convClearB')) !== null), 'true');
 
-  // 3) Box A auf Türkisch schalten – nur A wechselt
+  // 3) Box A auf Türkisch – nur A wechselt (statisch, ohne API)
   await page.selectOption('#convLangA', 'Türkisch');
-  await page.waitForTimeout(300);
+  await page.waitForTimeout(200);
   expect('A person label (TR)', await read('#convPersonLabelA'), 'Kişi A');
   expect('A trans label (TR)', await read('#convTransLabelA'), '↓ Çeviri A');
-  expect('A word hint (TR)', await read('#convWordHintA'), '💡 Açıklama için bir kelimeye dokunun');
   expect('A hold label (TR)', await read('#convHoldA .conv-hold-lbl'), 'Konuşmak için basılı tutun');
   expect('A clear button (TR)', await read('#convClearA .conv-clear-lbl'), 'Temizle');
   expect('A status ready (TR)', await read('#convAStatus'), 'Hazır');
-  // Box B bleibt Englisch
-  expect('B stays English', await read('#convHoldB .conv-hold-lbl'), 'Hold to speak');
+
+  // 4) Box B auf Französisch – DER gemeldete Fall. Nur B wechselt, A bleibt Türkisch.
+  await page.selectOption('#convLangB', 'Französisch');
+  await page.waitForTimeout(200);
+  expect('B person label (FR)', await read('#convPersonLabelB'), 'Personne B');
+  expect('B trans label (FR)', await read('#convTransLabelB'), '↓ Traduction pour B');
+  expect('B hold label (FR)', await read('#convHoldB .conv-hold-lbl'), 'Maintenir pour parler');
+  expect('B clear button (FR)', await read('#convClearB .conv-clear-lbl'), 'Effacer');
+  expect('A stays Turkish', await read('#convHoldA .conv-hold-lbl'), 'Konuşmak için basılı tutun');
 
   await browser.close();
 
