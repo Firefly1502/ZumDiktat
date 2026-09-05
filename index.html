@@ -1002,6 +1002,12 @@ body.has-sticky-recorder .sticky-recorder .manual-add-btn{
 .conv-v-spoken:empty::before{content:'…';color:var(--muted);}
 .conv-v-clearbtn{background:none;border:none;color:var(--muted);font-size:13px;cursor:pointer;padding:0 2px;line-height:1;opacity:0.7;flex-shrink:0;}
 .conv-v-clearbtn:active{opacity:1;color:var(--rec);}
+.conv-hold-row{display:flex;gap:8px;margin-top:8px;align-items:stretch;}
+.conv-hold-row .conv-hold-btn{margin-top:0;flex:1;width:auto;}
+.conv-clear-btn{flex-shrink:0;padding:0 16px;border-radius:12px;border:2px solid var(--border);background:var(--surface2);color:var(--muted);font-family:'DM Mono',monospace;font-weight:600;cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;user-select:none;-webkit-user-select:none;-webkit-tap-highlight-color:transparent;transition:all 0.15s;}
+.conv-clear-btn:active{background:var(--rec);border-color:var(--rec);color:#fff;}
+.conv-clear-ico{font-size:15px;line-height:1;}
+.conv-clear-lbl{font-size:10px;line-height:1;}
 .conv-v-arrow-row{display:flex;align-items:center;justify-content:space-between;flex-shrink:0;}
 .conv-v-translated{flex:1;min-height:70px;background:rgba(0,0,0,0.1);border:1px solid rgba(255,255,255,0.06);border-radius:10px;padding:8px 11px;font-size:14px;line-height:1.55;color:var(--text);}
 .conv-v-translated:empty::before{content:'…';color:var(--muted);}
@@ -1470,7 +1476,7 @@ body.has-sticky-recorder .sticky-recorder .manual-add-btn{
   <div class="conv-v-inner" id="convInnerA">
     <div class="conv-v-header">
       <div class="conv-v-header-top">
-        <span class="conv-v-label conv-v-label-a">Person A</span>
+        <span id="convPersonLabelA" class="conv-v-label conv-v-label-a">Person A</span>
         <span id="convAStatus" class="conv-v-status"></span>
       </div>
       <div class="conv-v-header-row">
@@ -1535,21 +1541,26 @@ body.has-sticky-recorder .sticky-recorder .manual-add-btn{
     <div class="conv-v-body">
       <div id="convAText" class="conv-v-spoken"></div>
       <div class="conv-v-arrow-row">
-        <span style="font-size:10px;text-transform:uppercase;letter-spacing:0.08em;color:var(--muted);padding-left:2px;">↓ Übersetzung für A</span>
-        <button class="conv-v-clearbtn" onclick="clearConversationSide('A')" title="Person A zurücksetzen">✕</button>
+        <span id="convTransLabelA" style="font-size:10px;text-transform:uppercase;letter-spacing:0.08em;color:var(--muted);padding-left:2px;">↓ Übersetzung für A</span>
       </div>
       <div class="conv-v-trans-row">
         <div id="convBTransMirror" class="conv-v-translated" onclick="handleTransWordTap(event,'A')" title="Wort antippen für Erklärung"></div>
         <button class="conv-v-speakbtn" onclick="repeatConversationTranslation('B')" title="Übersetzung vorlesen">🔊</button>
       </div>
-      <div class="conv-v-word-hint">💡 Wort antippen für Erklärung</div>
-      <button id="convHoldA" class="conv-hold-btn"
-        onmousedown="convHoldStart('A',event)" onmouseup="convHoldEnd('A',event)" onmouseleave="convHoldEnd('A',event)"
-        ontouchstart="convHoldStart('A',event)" ontouchend="convHoldEnd('A',event)" ontouchcancel="convHoldEnd('A',event)"
-        oncontextmenu="return false;">
-        <span class="conv-hold-ico">🎤</span>
-        <span class="conv-hold-lbl">Halten zum Sprechen</span>
-      </button>
+      <div id="convWordHintA" class="conv-v-word-hint">💡 Wort antippen für Erklärung</div>
+      <div class="conv-hold-row">
+        <button id="convHoldA" class="conv-hold-btn"
+          onmousedown="convHoldStart('A',event)" onmouseup="convHoldEnd('A',event)" onmouseleave="convHoldEnd('A',event)"
+          ontouchstart="convHoldStart('A',event)" ontouchend="convHoldEnd('A',event)" ontouchcancel="convHoldEnd('A',event)"
+          oncontextmenu="return false;">
+          <span class="conv-hold-ico">🎤</span>
+          <span class="conv-hold-lbl">Halten zum Sprechen</span>
+        </button>
+        <button id="convClearA" class="conv-clear-btn" onclick="clearConvSpoken('A')" title="Gesprochenes löschen">
+          <span class="conv-clear-ico">✕</span>
+          <span class="conv-clear-lbl">Löschen</span>
+        </button>
+      </div>
     </div>
   </div>
 </div>
@@ -1559,7 +1570,7 @@ body.has-sticky-recorder .sticky-recorder .manual-add-btn{
   <div class="conv-v-inner" id="convInnerB">
     <div class="conv-v-header">
       <div class="conv-v-header-top">
-        <span class="conv-v-label conv-v-label-b">Person B</span>
+        <span id="convPersonLabelB" class="conv-v-label conv-v-label-b">Person B</span>
         <span id="convBStatus" class="conv-v-status"></span>
       </div>
       <div class="conv-v-header-row">
@@ -1624,21 +1635,26 @@ body.has-sticky-recorder .sticky-recorder .manual-add-btn{
     <div class="conv-v-body">
       <div id="convBText" class="conv-v-spoken"></div>
       <div class="conv-v-arrow-row">
-        <span style="font-size:10px;text-transform:uppercase;letter-spacing:0.08em;color:var(--muted);padding-left:2px;">↓ Übersetzung für B</span>
-        <button class="conv-v-clearbtn" onclick="clearConversationSide('B')" title="Person B zurücksetzen">✕</button>
+        <span id="convTransLabelB" style="font-size:10px;text-transform:uppercase;letter-spacing:0.08em;color:var(--muted);padding-left:2px;">↓ Übersetzung für B</span>
       </div>
       <div class="conv-v-trans-row">
         <div id="convATrans" class="conv-v-translated" onclick="handleTransWordTap(event,'B')" title="Wort antippen für Erklärung"></div>
         <button class="conv-v-speakbtn" onclick="repeatConversationTranslation('A')" title="Übersetzung vorlesen">🔊</button>
       </div>
-      <div class="conv-v-word-hint">💡 Wort antippen für Erklärung</div>
-      <button id="convHoldB" class="conv-hold-btn"
-        onmousedown="convHoldStart('B',event)" onmouseup="convHoldEnd('B',event)" onmouseleave="convHoldEnd('B',event)"
-        ontouchstart="convHoldStart('B',event)" ontouchend="convHoldEnd('B',event)" ontouchcancel="convHoldEnd('B',event)"
-        oncontextmenu="return false;">
-        <span class="conv-hold-ico">🎤</span>
-        <span class="conv-hold-lbl">Halten zum Sprechen</span>
-      </button>
+      <div id="convWordHintB" class="conv-v-word-hint">💡 Wort antippen für Erklärung</div>
+      <div class="conv-hold-row">
+        <button id="convHoldB" class="conv-hold-btn"
+          onmousedown="convHoldStart('B',event)" onmouseup="convHoldEnd('B',event)" onmouseleave="convHoldEnd('B',event)"
+          ontouchstart="convHoldStart('B',event)" ontouchend="convHoldEnd('B',event)" ontouchcancel="convHoldEnd('B',event)"
+          oncontextmenu="return false;">
+          <span class="conv-hold-ico">🎤</span>
+          <span class="conv-hold-lbl">Halten zum Sprechen</span>
+        </button>
+        <button id="convClearB" class="conv-clear-btn" onclick="clearConvSpoken('B')" title="Gesprochenes löschen">
+          <span class="conv-clear-ico">✕</span>
+          <span class="conv-clear-lbl">Löschen</span>
+        </button>
+      </div>
     </div>
   </div>
 </div>
@@ -2628,6 +2644,130 @@ var convTranslateTimer = null;
 var convLastTranslationA = '';
 var convLastTranslationB = '';
 
+// ── Lokalisierbare Box-Beschriftungen (Gesprächsmodus) ──
+// Kanonische Quelle = Deutsch. Andere Sprachen werden bei Bedarf per API
+// übersetzt und dauerhaft in localStorage zwischengespeichert (1 Call je Sprache).
+var CONV_UI_LABELS_DE = {
+  person: 'Person',
+  ready: 'Bereit',
+  listening: '🎙 Hört zu…',
+  transFor: 'Übersetzung für',
+  wordHint: 'Wort antippen für Erklärung',
+  hold: 'Halten zum Sprechen',
+  holdActive: 'Loslassen zum Stoppen',
+  clear: 'Löschen',
+  clearTitle: 'Gesprochenes löschen',
+  micDenied: 'Mikrofon verweigert',
+  langUnsupported: 'Sprache nicht unterstützt',
+  cantStart: 'Konnte nicht starten',
+  errorPrefix: 'Fehler:'
+};
+var CONV_UI_LABELS_EN = {
+  person: 'Person',
+  ready: 'Ready',
+  listening: '🎙 Listening…',
+  transFor: 'Translation for',
+  wordHint: 'Tap a word for an explanation',
+  hold: 'Hold to speak',
+  holdActive: 'Release to stop',
+  clear: 'Clear',
+  clearTitle: 'Clear what was said',
+  micDenied: 'Microphone denied',
+  langUnsupported: 'Language not supported',
+  cantStart: 'Could not start',
+  errorPrefix: 'Error:'
+};
+var convLabelFetching = {};
+function getConvLabelCache() {
+  try { return JSON.parse(localStorage.getItem('dk_conv_ui_labels') || '{}'); } catch(e) { return {}; }
+}
+function saveConvLabelCache(c) {
+  try { localStorage.setItem('dk_conv_ui_labels', JSON.stringify(c)); } catch(e) {}
+}
+function getConvBundle(lang) {
+  if (lang === 'Deutsch') return CONV_UI_LABELS_DE;
+  if (lang === 'Englisch') return CONV_UI_LABELS_EN;
+  var cache = getConvLabelCache();
+  return cache[lang] || null;
+}
+function convLangOf(side) {
+  var el = document.getElementById(side === 'A' ? 'convLangA' : 'convLangB');
+  return (el && el.value) ? el.value : 'Deutsch';
+}
+function convLabel(side, key) {
+  var b = getConvBundle(convLangOf(side)) || CONV_UI_LABELS_DE;
+  return b[key] || CONV_UI_LABELS_DE[key] || '';
+}
+function applyConvBoxLabels(side) {
+  var lang = convLangOf(side);
+  var b = getConvBundle(lang);
+  if (!b) { fetchConvLabels(lang); b = CONV_UI_LABELS_DE; }
+  var setTxt = function(id, txt) { var el = document.getElementById(id); if (el) el.textContent = txt; };
+  setTxt('convPersonLabel' + side, b.person + ' ' + side);
+  setTxt('convTransLabel' + side, '↓ ' + b.transFor + ' ' + side);
+  setTxt('convWordHint' + side, '💡 ' + b.wordHint);
+  var hold = document.getElementById('convHold' + side);
+  if (hold && !hold.classList.contains('active')) {
+    var hl = hold.querySelector('.conv-hold-lbl'); if (hl) hl.textContent = b.hold;
+  }
+  var clr = document.getElementById('convClear' + side);
+  if (clr) {
+    var cl = clr.querySelector('.conv-clear-lbl'); if (cl) cl.textContent = b.clear;
+    clr.title = b.clearTitle;
+  }
+  if (convActiveSpeaker !== side) {
+    var st = document.getElementById(side === 'A' ? 'convAStatus' : 'convBStatus');
+    if (st && (!st.textContent || st.textContent === CONV_UI_LABELS_DE.ready || st.textContent === CONV_UI_LABELS_EN.ready)) {
+      st.textContent = b.ready;
+    }
+  }
+}
+function fetchConvLabels(lang) {
+  if (!lang || lang === 'Deutsch' || lang === 'Englisch') return;
+  if (convLabelFetching[lang]) return;
+  if (getConvLabelCache()[lang]) return;
+  if (!apiKey) return; // ohne Schlüssel bleibt es bei Deutsch als Fallback
+  convLabelFetching[lang] = true;
+  var payload = JSON.stringify(CONV_UI_LABELS_DE);
+  var prompt = 'Übersetze die WERTE dieses JSON-Objekts von Deutsch nach ' + lang + '. ' +
+    'Behalte alle Schlüssel exakt bei. Übersetze keine Emojis und keine Satzzeichen-Platzhalter. ' +
+    'Gib AUSSCHLIESSLICH das JSON zurück – ohne Erklärung, ohne Codeblock:\n\n' + payload;
+  fetch('https://api.anthropic.com/v1/messages', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'x-api-key': apiKey,
+      'anthropic-version': '2023-06-01',
+      'anthropic-dangerous-direct-browser-access': 'true'
+    },
+    body: JSON.stringify({
+      model: 'claude-sonnet-5',
+      max_tokens: 500,
+      thinking: {type:'disabled'},
+      messages: [{ role: 'user', content: prompt }]
+    })
+  }).then(function(r) { return r.json(); })
+    .then(function(d) {
+      registerUsage(d);
+      var txt = (anthropicText(d) || '').trim();
+      txt = txt.replace(/^```[a-zA-Z]*\s*/, '').replace(/```\s*$/, '').trim();
+      var obj = null;
+      try { obj = JSON.parse(txt); } catch(e) { obj = null; }
+      if (obj && typeof obj === 'object') {
+        var clean = {};
+        Object.keys(CONV_UI_LABELS_DE).forEach(function(k) {
+          clean[k] = (typeof obj[k] === 'string' && obj[k].trim()) ? obj[k].trim() : CONV_UI_LABELS_DE[k];
+        });
+        var cache = getConvLabelCache();
+        cache[lang] = clean;
+        saveConvLabelCache(cache);
+        ['A', 'B'].forEach(function(s) { if (convLangOf(s) === lang) applyConvBoxLabels(s); });
+      }
+      convLabelFetching[lang] = false;
+    })
+    .catch(function() { convLabelFetching[lang] = false; });
+}
+
 var CONV_SPEECH_CODES = {
   'Deutsch':'de-DE',
   'Englisch':'en-US',
@@ -2701,6 +2841,8 @@ function updateConversationChips() {
   var chipB = document.getElementById('convChipB');
   if (a && b && chipA) chipA.textContent = 'Spricht: ' + a.value + ' · Hört: ' + b.value;
   if (a && b && chipB) chipB.textContent = 'Spricht: ' + b.value + ' · Hört: ' + a.value;
+  applyConvBoxLabels('A');
+  applyConvBoxLabels('B');
 }
 
 function showConversationMode() {
@@ -2755,8 +2897,8 @@ function setConvStatus(side, text, isActive) {
 function stopConversationRec() {
   stopSilenceDetection();
   try { if (convRecognition) convRecognition.stop(); } catch(e) {}
-  if (convActiveSpeaker === 'A') setConvStatus('A', 'Bereit', false);
-  if (convActiveSpeaker === 'B') setConvStatus('B', 'Bereit', false);
+  if (convActiveSpeaker === 'A') setConvStatus('A', convLabel('A', 'ready'), false);
+  if (convActiveSpeaker === 'B') setConvStatus('B', convLabel('B', 'ready'), false);
   convActiveSpeaker = null;
 }
 
@@ -2769,7 +2911,7 @@ function convHoldStart(side, e) {
   if (btn && convActiveSpeaker === side) {
     btn.classList.add('active');
     var lbl = btn.querySelector('.conv-hold-lbl');
-    if (lbl) lbl.textContent = 'Loslassen zum Stoppen';
+    if (lbl) lbl.textContent = convLabel(side, 'holdActive');
   }
 }
 function convHoldEnd(side, e) {
@@ -2779,7 +2921,7 @@ function convHoldEnd(side, e) {
   if (btn) {
     btn.classList.remove('active');
     var lbl = btn.querySelector('.conv-hold-lbl');
-    if (lbl) lbl.textContent = 'Halten zum Sprechen';
+    if (lbl) lbl.textContent = convLabel(side, 'hold');
   }
 }
 
@@ -2813,7 +2955,7 @@ function toggleConversationRec(side) {
   convRecognition.maxAlternatives = 1;
   convActiveSpeaker = side;
 
-  setConvStatus(side, '🎙 Hört zu…', true);
+  setConvStatus(side, convLabel(side, 'listening'), true);
 
   convRecognition.onresult = function(e) {
     var interim = '';
@@ -2848,7 +2990,7 @@ function toggleConversationRec(side) {
       // noch aktiv → weiterlaufen lassen (Browser stoppt periodisch von selbst)
       try { convRecognition.start(); } catch(e) {}
     } else {
-      setConvStatus(side, 'Bereit', false);
+      setConvStatus(side, convLabel(side, 'ready'), false);
     }
   };
 
@@ -2859,13 +3001,13 @@ function toggleConversationRec(side) {
       return;
     }
     if (msg === 'not-allowed') {
-      setConvStatus(side, 'Mikrofon verweigert', false);
+      setConvStatus(side, convLabel(side, 'micDenied'), false);
       toast('Mikrofon-Zugriff verweigert – Einstellungen prüfen', 'err');
     } else if (msg === 'language-not-supported') {
-      setConvStatus(side, 'Sprache nicht unterstützt', false);
+      setConvStatus(side, convLabel(side, 'langUnsupported'), false);
       toast('Diese Sprache wird vom Browser nicht unterstützt: ' + langName, 'err');
     } else {
-      setConvStatus(side, 'Fehler: ' + msg, false);
+      setConvStatus(side, convLabel(side, 'errorPrefix') + ' ' + msg, false);
     }
     convActiveSpeaker = null;
   };
@@ -2874,7 +3016,7 @@ function toggleConversationRec(side) {
     convRecognition.start();
     startSilenceDetection(side);
   } catch(e) {
-    setConvStatus(side, 'Konnte nicht starten', false);
+    setConvStatus(side, convLabel(side, 'cantStart'), false);
     convActiveSpeaker = null;
   }
 }
@@ -3031,6 +3173,29 @@ function clearConversationSide(side) {
     if (trans) trans.textContent = '';
   }
   toast('Person ' + side + ' zurückgesetzt', 'ok');
+}
+
+// Nur das Gesprochene dieser Seite + dessen Übersetzung leeren,
+// damit der nächste Satz nicht zusammen mit dem alten neu übersetzt wird.
+function clearConvSpoken(side) {
+  clearTimeout(convTranslateTimer);
+  if (side === 'A') {
+    convFinalTextA = '';
+    convLastTranslationA = '';
+    var spA = document.getElementById('convAText');
+    var trA = document.getElementById('convATrans');
+    if (spA) spA.textContent = '';
+    if (trA) trA.textContent = '';
+  } else {
+    convFinalTextB = '';
+    convLastTranslationB = '';
+    var spB = document.getElementById('convBText');
+    var trB = document.getElementById('convBTransMirror');
+    if (spB) spB.textContent = '';
+    if (trB) trB.textContent = '';
+  }
+  try { saveConvSession(); } catch(e) {}
+  toast(convLabel(side, 'clear'), 'ok');
 }
 
 function clearConversationHistory() {
