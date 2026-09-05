@@ -2754,32 +2754,10 @@ function setConvStatus(side, text, isActive) {
 
 function stopConversationRec() {
   stopSilenceDetection();
-  var r = convRecognition;
-  convRecognition = null;            // Referenz sofort loesen: veraltete Callbacks werden ignoriert
-  if (r) {
-    r.onresult = null; r.onend = null; r.onerror = null; r.onstart = null;
-    try { r.abort(); } catch(e) {}
-    try { r.stop(); } catch(e) {}
-  }
+  try { if (convRecognition) convRecognition.stop(); } catch(e) {}
   if (convActiveSpeaker === 'A') setConvStatus('A', 'Bereit', false);
   if (convActiveSpeaker === 'B') setConvStatus('B', 'Bereit', false);
   convActiveSpeaker = null;
-}
-
-// Startet die Erkennung robust: bei "already started"/InvalidState kurz warten und erneut versuchen.
-function startConvRecognition(rec, side, attempt) {
-  if (convRecognition !== rec) return;   // wurde inzwischen ersetzt/gestoppt
-  try {
-    rec.start();
-    startSilenceDetection(side);
-  } catch(err) {
-    if (attempt < 3) {
-      setTimeout(function() { startConvRecognition(rec, side, attempt + 1); }, 250);
-    } else {
-      setConvStatus(side, 'Konnte nicht starten', false);
-      if (convRecognition === rec) { convActiveSpeaker = null; convRecognition = null; }
-    }
-  }
 }
 
 // Halte-Taste (Push-to-Talk) fuer den Gespraechsmodus: Aufnahme laeuft nur solange gedrueckt.
@@ -2829,17 +2807,15 @@ function toggleConversationRec(side) {
   var code = CONV_SPEECH_CODES[langName] || 'de-DE';
 
   var isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
-  var rec = new SR();
-  convRecognition = rec;
-  rec.lang = code;
-  rec.interimResults = !isSafari;
-  rec.continuous = !isSafari;
+  convRecognition = new SR();
+  convRecognition.lang = code;
+  convRecognition.interimResults = !isSafari;
+  convRecognition.continuous = !isSafari;
   convActiveSpeaker = side;
 
   setConvStatus(side, '🎙 Hört zu…', true);
 
-  rec.onresult = function(e) {
-    if (convRecognition !== rec) return;   // veraltete Instanz ignorieren
+  convRecognition.onresult = function(e) {
     var interim = '';
     var newFinal = '';
     for (var i = e.resultIndex; i < e.results.length; i++) {
@@ -2867,45 +2843,43 @@ function toggleConversationRec(side) {
     }
   };
 
-  rec.onend = function() {
-    if (convRecognition !== rec) return;   // veraltete Instanz ignorieren
+  convRecognition.onend = function() {
     if (convActiveSpeaker === side) {
-      // Safari: kein continuous → automatisch neu starten, solange die Seite aktiv ist
+      // Safari: continuous nicht unterstützt → automatisch neu starten
       if (isSafari) {
-        try { rec.start(); return; } catch(e) {}
+        try {
+          convRecognition.start();
+          return;
+        } catch(e) {}
       }
       setConvStatus(side, 'Bereit', false);
       convActiveSpeaker = null;
-      convRecognition = null;
     }
   };
 
-  rec.onerror = function(ev) {
-    if (convRecognition !== rec) return;   // veraltete Instanz ignorieren
+  convRecognition.onerror = function(ev) {
     var msg = ev && ev.error ? ev.error : '?';
-    if (msg === 'aborted') return;         // von uns absichtlich gestoppt
-    if (msg === 'no-speech') {
-      // Safari beendet bei Stille die Erkennung → neu starten, solange die Seite aktiv ist
-      if (isSafari && convActiveSpeaker === side) {
-        try { rec.start(); return; } catch(e) {}
-      }
-      setConvStatus(side, 'Bereit', false);
-      convActiveSpeaker = null; convRecognition = null;
-      return;
-    }
     if (msg === 'not-allowed') {
       setConvStatus(side, 'Mikrofon verweigert', false);
       toast('Mikrofon-Zugriff verweigert – Einstellungen prüfen', 'err');
+    } else if (msg === 'no-speech') {
+      setConvStatus(side, 'Bereit', false);
     } else if (msg === 'language-not-supported') {
       setConvStatus(side, 'Sprache nicht unterstützt', false);
       toast('Diese Sprache wird vom Browser nicht unterstützt: ' + langName, 'err');
     } else {
       setConvStatus(side, 'Fehler: ' + msg, false);
     }
-    convActiveSpeaker = null; convRecognition = null;
+    convActiveSpeaker = null;
   };
 
-  startConvRecognition(rec, side, 0);
+  try {
+    convRecognition.start();
+    startSilenceDetection(side);
+  } catch(e) {
+    setConvStatus(side, 'Konnte nicht starten', false);
+    convActiveSpeaker = null;
+  }
 }
 
 function translateConversationSide(side, text) {
