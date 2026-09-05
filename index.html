@@ -992,6 +992,9 @@ body.has-sticky-recorder .sticky-recorder .manual-add-btn{
 .conv-v-recbtn.active{background:var(--rec);border-color:var(--rec);box-shadow:0 0 0 6px var(--rec-glow);}
 .conv-v-recdot{width:12px;height:12px;border-radius:50%;background:var(--rec);display:block;transition:all 0.2s;}
 .conv-v-recbtn.active .conv-v-recdot{background:#fff;border-radius:2px;width:9px;height:9px;}
+.conv-hold-btn{margin-top:8px;width:100%;padding:14px 16px;border-radius:12px;border:2px solid var(--accent);background:var(--surface2);color:var(--text);font-family:'DM Mono',monospace;font-size:13px;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;user-select:none;-webkit-user-select:none;touch-action:none;-webkit-tap-highlight-color:transparent;transition:all 0.15s;}
+.conv-hold-btn.active{background:var(--rec);border-color:var(--rec);color:#fff;box-shadow:0 0 0 6px var(--rec-glow);}
+.conv-hold-ico{font-size:18px;line-height:1;}
 .conv-v-rotatebtn{width:32px;height:32px;border-radius:8px;border:1px solid var(--border);background:none;color:var(--muted);font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:color 0.15s,border-color 0.15s;line-height:1;}
 .conv-v-rotatebtn:active{color:var(--text);border-color:var(--text);}
 .conv-v-body{flex:1;display:flex;flex-direction:column;gap:6px;}
@@ -1540,6 +1543,13 @@ body.has-sticky-recorder .sticky-recorder .manual-add-btn{
         <button class="conv-v-speakbtn" onclick="repeatConversationTranslation('B')" title="Übersetzung vorlesen">🔊</button>
       </div>
       <div class="conv-v-word-hint">💡 Wort antippen für Erklärung</div>
+      <button id="convHoldA" class="conv-hold-btn"
+        onmousedown="convHoldStart('A',event)" onmouseup="convHoldEnd('A',event)" onmouseleave="convHoldEnd('A',event)"
+        ontouchstart="convHoldStart('A',event)" ontouchend="convHoldEnd('A',event)" ontouchcancel="convHoldEnd('A',event)"
+        oncontextmenu="return false;">
+        <span class="conv-hold-ico">🎤</span>
+        <span class="conv-hold-lbl">Halten zum Sprechen</span>
+      </button>
     </div>
   </div>
 </div>
@@ -2741,6 +2751,29 @@ function stopConversationRec() {
   if (convActiveSpeaker === 'A') setConvStatus('A', 'Bereit', false);
   if (convActiveSpeaker === 'B') setConvStatus('B', 'Bereit', false);
   convActiveSpeaker = null;
+}
+
+// Halte-Taste (Push-to-Talk) fuer den Gespraechsmodus: Aufnahme laeuft nur solange gedrueckt.
+function convHoldStart(side, e) {
+  if (e && e.preventDefault) e.preventDefault();
+  if (convActiveSpeaker === side) return;
+  toggleConversationRec(side); // startet die Aufnahme fuer diese Seite
+  var btn = document.getElementById('convHold' + side);
+  if (btn && convActiveSpeaker === side) {
+    btn.classList.add('active');
+    var lbl = btn.querySelector('.conv-hold-lbl');
+    if (lbl) lbl.textContent = 'Loslassen zum Stoppen';
+  }
+}
+function convHoldEnd(side, e) {
+  if (e && e.preventDefault) e.preventDefault();
+  if (convActiveSpeaker === side) stopConversationRec();
+  var btn = document.getElementById('convHold' + side);
+  if (btn) {
+    btn.classList.remove('active');
+    var lbl = btn.querySelector('.conv-hold-lbl');
+    if (lbl) lbl.textContent = 'Halten zum Sprechen';
+  }
 }
 
 function toggleConversationRec(side) {
