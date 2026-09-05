@@ -1025,6 +1025,7 @@ body.has-sticky-recorder .sticky-recorder .manual-add-btn{
   <header>
     <div class="logo">Michaels Diktierger&auml;t</div>
     <div class="header-right">
+      <button class="theme-btn" id="gearBtn" onclick="toggleSettingsPanel()" title="API-Schl&uuml;ssel &amp; Einstellungen">&#9881;&#65039;</button>
       <button class="theme-btn" id="themeBtn" onclick="toggleTheme()">&#9728;&#65039;</button>
       <div class="chip"><div class="dot" id="dot"></div><span id="stxt">Starte&hellip;</span></div>
     </div>
@@ -1035,6 +1036,7 @@ body.has-sticky-recorder .sticky-recorder .manual-add-btn{
     <button class="btn-mic" onclick="requestMic()">&#127908; Erlauben</button>
   </div>
 
+  <div id="settingsPanel" class="hidden">
   <div class="card" style="padding:0;overflow:hidden;">
     <div onclick="toggleApiCard()" style="display:flex;justify-content:space-between;align-items:center;padding:12px 16px;cursor:pointer;user-select:none;-webkit-user-select:none;">
       <span style="font-size:12px;color:var(--muted);">&#128273; API-Schluessel</span>
@@ -1087,6 +1089,7 @@ body.has-sticky-recorder .sticky-recorder .manual-add-btn{
         </div>
       </div>
     </div>
+  </div>
   </div>
 
   <div class="card" id="segCard">
@@ -1719,6 +1722,8 @@ window.addEventListener('DOMContentLoaded', function() {
       apiKey = k;
       document.getElementById('apiKey').value = k;
     } else {
+      var sp = document.getElementById('settingsPanel');
+      if (sp) sp.classList.remove('hidden');
       var ab = document.getElementById('apiBody');
       var ac = document.getElementById('apiChevron');
       ab.style.maxHeight = '260px'; ab.style.opacity = '1';
@@ -1817,6 +1822,14 @@ function acquireMic(silent) {
 // =====================================================
 // API KEY
 // =====================================================
+function toggleSettingsPanel() {
+  var panel = document.getElementById('settingsPanel');
+  if (!panel) return;
+  var opening = panel.classList.contains('hidden');
+  panel.classList.toggle('hidden');
+  if (opening) panel.scrollIntoView({behavior:'smooth', block:'start'});
+}
+
 function toggleApiCard() {
   var body = document.getElementById('apiBody');
   var chev = document.getElementById('apiChevron');
