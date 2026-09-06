@@ -85,6 +85,16 @@ function expect(name, actual, expected) {
   expect('B clear button (FR)', await read('#convClearB .conv-clear-lbl'), 'Effacer');
   expect('A stays Turkish', await read('#convHoldA .conv-hold-lbl'), 'Konuşmak için basılı tutun');
 
+  // 5) Stimm-Auswahl (männlich/weiblich) je Box – UI-Verhalten
+  expect('A gender default female active', await page.$eval('#convGenderAf', function(el){ return String(el.classList.contains('active')); }), 'true');
+  expect('B gender buttons exist', String((await page.$('#convGenderBf')) !== null && (await page.$('#convGenderBm')) !== null), 'true');
+  await page.click('#convGenderAm');
+  await page.waitForTimeout(100);
+  expect('A male active after click', await page.$eval('#convGenderAm', function(el){ return String(el.classList.contains('active')); }), 'true');
+  expect('A female inactive after click', await page.$eval('#convGenderAf', function(el){ return String(el.classList.contains('active')); }), 'false');
+  var stored = await page.evaluate(function(){ try { return localStorage.getItem('dk_conv_voice_gender'); } catch(e){ return null; } });
+  expect('A choice persisted', String(/"A"\s*:\s*"m"/.test(stored || '')), 'true');
+
   await browser.close();
 
   var failed = checks.filter(function(c) { return !c.ok; });

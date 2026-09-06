@@ -1015,6 +1015,10 @@ body.has-sticky-recorder .sticky-recorder .manual-add-btn{
 .conv-v-trans-row .conv-v-translated{flex:1;}
 .conv-v-speakbtn{background:none;border:1px solid var(--border);border-radius:8px;color:var(--muted);font-size:15px;padding:7px 8px;cursor:pointer;flex-shrink:0;transition:color 0.15s,border-color 0.15s;line-height:1;}
 .conv-v-speakbtn:active{color:var(--ok);border-color:var(--ok);}
+.conv-v-voicecol{display:flex;flex-direction:column;align-items:center;gap:4px;flex-shrink:0;}
+.conv-v-gender{display:flex;gap:3px;}
+.conv-gender-btn{background:none;border:1px solid var(--border);border-radius:6px;color:var(--muted);font-size:13px;line-height:1;padding:3px 6px;cursor:pointer;transition:all 0.15s;}
+.conv-gender-btn.active{color:#fff;background:var(--accent);border-color:var(--accent);}
 /* Feature 4: Geschwindigkeit pro Person */
 /* Feature 5: Wort-Erklärung Popup */
 .conv-word-popup{position:fixed;z-index:9999;background:var(--surface);border:1.5px solid var(--accent);border-radius:14px;padding:12px 14px 12px 14px;max-width:270px;box-shadow:0 8px 32px rgba(0,0,0,0.6);font-size:12px;line-height:1.6;color:var(--text);}
@@ -1545,7 +1549,13 @@ body.has-sticky-recorder .sticky-recorder .manual-add-btn{
       </div>
       <div class="conv-v-trans-row">
         <div id="convBTransMirror" class="conv-v-translated" onclick="handleTransWordTap(event,'A')" title="Wort antippen für Erklärung"></div>
-        <button class="conv-v-speakbtn" onclick="repeatConversationTranslation('B')" title="Übersetzung vorlesen">🔊</button>
+        <div class="conv-v-voicecol">
+          <button class="conv-v-speakbtn" onclick="repeatConversationTranslation('B')" title="Übersetzung vorlesen">🔊</button>
+          <div class="conv-v-gender" role="group" aria-label="Stimme">
+            <button type="button" id="convGenderAf" class="conv-gender-btn active" onclick="setConvVoiceGender('A','f')" title="Weibliche Stimme">♀</button>
+            <button type="button" id="convGenderAm" class="conv-gender-btn" onclick="setConvVoiceGender('A','m')" title="Männliche Stimme">♂</button>
+          </div>
+        </div>
       </div>
       <div id="convWordHintA" class="conv-v-word-hint">💡 Wort antippen für Erklärung</div>
       <div class="conv-hold-row">
@@ -1639,7 +1649,13 @@ body.has-sticky-recorder .sticky-recorder .manual-add-btn{
       </div>
       <div class="conv-v-trans-row">
         <div id="convATrans" class="conv-v-translated" onclick="handleTransWordTap(event,'B')" title="Wort antippen für Erklärung"></div>
-        <button class="conv-v-speakbtn" onclick="repeatConversationTranslation('A')" title="Übersetzung vorlesen">🔊</button>
+        <div class="conv-v-voicecol">
+          <button class="conv-v-speakbtn" onclick="repeatConversationTranslation('A')" title="Übersetzung vorlesen">🔊</button>
+          <div class="conv-v-gender" role="group" aria-label="Stimme">
+            <button type="button" id="convGenderBf" class="conv-gender-btn active" onclick="setConvVoiceGender('B','f')" title="Weibliche Stimme">♀</button>
+            <button type="button" id="convGenderBm" class="conv-gender-btn" onclick="setConvVoiceGender('B','m')" title="Männliche Stimme">♂</button>
+          </div>
+        </div>
       </div>
       <div id="convWordHintB" class="conv-v-word-hint">💡 Wort antippen für Erklärung</div>
       <div class="conv-hold-row">
@@ -2644,6 +2660,14 @@ var convTranslateTimer = null;
 var convLastTranslationA = '';
 var convLastTranslationB = '';
 
+// Gewählte Stimmlage je Box für die vorgelesene Übersetzung ('f' = weiblich, 'm' = männlich).
+var convVoiceGender = { A: 'f', B: 'f' };
+try {
+  var _cvg = JSON.parse(localStorage.getItem('dk_conv_voice_gender') || 'null');
+  if (_cvg && (_cvg.A === 'f' || _cvg.A === 'm')) convVoiceGender.A = _cvg.A;
+  if (_cvg && (_cvg.B === 'f' || _cvg.B === 'm')) convVoiceGender.B = _cvg.B;
+} catch(e) {}
+
 // ── Lokalisierbare Box-Beschriftungen (Gesprächsmodus) ──
 // Jede Box wird in ihrer eigenen gewählten Sprache beschriftet. Alle Sprachen
 // der Auswahlliste sind fest hinterlegt (CONV_UI_LABELS) – funktioniert sofort,
@@ -2887,6 +2911,7 @@ function showConversationMode() {
   var sticky = document.querySelector('.sticky-recorder');
   if (sticky) sticky.style.setProperty('display', 'none', 'important');
   updateConversationChips();
+  initConvVoiceGenderUI();
   tryRestoreConvSession();
   try { window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' }); } catch(e) {}
 }
@@ -3070,7 +3095,7 @@ function translateConversationSide(side, text) {
     if (side === 'A') convLastTranslationA = cached; else convLastTranslationB = cached;
     var autoSpk = document.getElementById('convAutoSpeak');
     if (autoSpk && autoSpk.checked) {
-      speakConversationTranslation(toLang, cached, 1.0);
+      speakConversationTranslation(toLang, cached, 1.0, convVoiceGender[side === 'A' ? 'B' : 'A']);
     }
     saveConvSession();
     return;
@@ -3112,7 +3137,7 @@ function translateConversationSide(side, text) {
 
       var autoSpeak = document.getElementById('convAutoSpeak');
       if (autoSpeak && autoSpeak.checked && translated) {
-        speakConversationTranslation(toLang, translated, 1.0);
+        speakConversationTranslation(toLang, translated, 1.0, convVoiceGender[side === 'A' ? 'B' : 'A']);
       }
 
       var autoFlip = document.getElementById('convAutoFlip');
@@ -3128,7 +3153,33 @@ function translateConversationSide(side, text) {
     });
 }
 
-function speakConversationTranslation(langName, text, speed) {
+// Bekannte Stimmnamen der gängigen Plattformen (macOS/iOS, Windows, Android/Google).
+// Der Web-Speech-Standard liefert kein Geschlecht – daher heuristisch über den Namen.
+var CONV_FEMALE_NAMES = /\b(anna|petra|helena|katja|marlene|hedda|vicki|sabina|samantha|victoria|karen|moira|tessa|fiona|serena|kate|stephanie|allison|ava|susan|zoe|amelie|amélie|audrey|aurelie|julie|marie|chantal|virginie|paulina|ewa|zosia|monica|penelope|laia|montserrat|marisol|carla|alice|federica|elsa|luciana|joana|catarina|ines|milena|zuzana|iveta|alena|laura|ioana|dora|tatyana|katya|ekaterina|daria|alyona|zira|hazel|heather|catherine|nora|nicky|sara|lekha|damayanti|kanya|kyoko|otoya|yuna|sora|nanami|haruka|mei-jia|sin-ji|ting-ting|linh|lan)\b/;
+var CONV_MALE_NAMES = /\b(alex|fred|daniel|thomas|stefan|yannick|jorge|diego|juan|carlos|luca|cosimo|xander|maged|tarik|rishi|david|mark|george|oliver|aaron|arthur|gordon|nicolas|bruno|felipe|ricardo|hattori|yuri|pavel|maxim|cem|onur|wojciech|krzysztof|magnus|klaus|conrad|hans)\b/;
+function convVoiceGenderOf(v) {
+  var n = (v && v.name ? v.name : '').toLowerCase();
+  if (/female|weiblich|woman|\bfrau\b|femme|mujer|femminile|damstem/.test(n)) return 'f';
+  if (/male|männlich|\bman\b|\bmann\b|homme|hombre|maschile|herrstem/.test(n)) return 'm';
+  if (CONV_FEMALE_NAMES.test(n)) return 'f';
+  if (CONV_MALE_NAMES.test(n)) return 'm';
+  return '';
+}
+function convPickVoice(code, gender) {
+  try {
+    var voices = (window.speechSynthesis && window.speechSynthesis.getVoices) ? window.speechSynthesis.getVoices() : [];
+    if (!voices || !voices.length) return null;
+    var base = code.split('-')[0].toLowerCase();
+    var langVoices = voices.filter(function(v) { return v.lang && v.lang.toLowerCase().indexOf(base) === 0; });
+    if (!langVoices.length) return null; // keine Stimme dieser Sprache → Browser-Standard
+    if (gender) {
+      var m = langVoices.filter(function(v) { return convVoiceGenderOf(v) === gender; });
+      if (m.length) return m[0];
+    }
+    return langVoices[0];
+  } catch(e) { return null; }
+}
+function speakConversationTranslation(langName, text, speed, gender) {
   try {
     if (!('speechSynthesis' in window) || !text) return;
     window.speechSynthesis.cancel();
@@ -3136,17 +3187,45 @@ function speakConversationTranslation(langName, text, speed) {
     var code = CONV_SPEECH_CODES[langName] || 'de-DE';
     u.lang = code;
     u.rate = speed || 1.0;
+    var v = convPickVoice(code, gender);
+    if (v) u.voice = v;
     speechSynthesis.speak(u);
   } catch(e) {}
+}
+// Stimmlage je Box wählen und merken.
+function setConvVoiceGender(box, g) {
+  if (g !== 'f' && g !== 'm') return;
+  convVoiceGender[box] = g;
+  try { localStorage.setItem('dk_conv_voice_gender', JSON.stringify(convVoiceGender)); } catch(e) {}
+  var f = document.getElementById('convGender' + box + 'f');
+  var m = document.getElementById('convGender' + box + 'm');
+  if (f) f.classList.toggle('active', g === 'f');
+  if (m) m.classList.toggle('active', g === 'm');
+  // Sofortiges Hörbeispiel der zuletzt vorhandenen Übersetzung dieser Box, falls vorhanden.
+  var langName = document.getElementById(box === 'A' ? 'convLangA' : 'convLangB').value;
+  var sample = box === 'A' ? convLastTranslationB : convLastTranslationA;
+  if (sample) speakConversationTranslation(langName, sample, 1.0, g);
+}
+function initConvVoiceGenderUI() {
+  ['A', 'B'].forEach(function(box) {
+    var g = convVoiceGender[box];
+    var f = document.getElementById('convGender' + box + 'f');
+    var m = document.getElementById('convGender' + box + 'm');
+    if (f) f.classList.toggle('active', g === 'f');
+    if (m) m.classList.toggle('active', g === 'm');
+  });
+  // Stimmen vorwärmen (getVoices ist anfangs oft leer, bis 'voiceschanged' feuert).
+  try { if (window.speechSynthesis) { window.speechSynthesis.onvoiceschanged = window.speechSynthesis.onvoiceschanged || function(){}; window.speechSynthesis.getVoices(); } } catch(e) {}
 }
 
 function repeatConversationTranslation(side) {
   var langName = document.getElementById(side === 'A' ? 'convLangB' : 'convLangA').value;
   var text = side === 'A' ? convLastTranslationA : convLastTranslationB;
   if (!text) { toast('Noch keine Übersetzung vorhanden', 'err'); return; }
-  // side='B' → Button in Box A → Zuhörer ist A → Speed von A
-  // side='A' → Button in Box B → Zuhörer ist B → Speed von B
-  speakConversationTranslation(langName, text, 1.0);
+  // side='B' → Button in Box A → gesprochene Sprache = Box A → Stimmlage A
+  // side='A' → Button in Box B → gesprochene Sprache = Box B → Stimmlage B
+  var box = side === 'A' ? 'B' : 'A';
+  speakConversationTranslation(langName, text, 1.0, convVoiceGender[box]);
 }
 
 function updateConvHistoryCount() {
