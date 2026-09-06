@@ -1002,6 +1002,12 @@ body.has-sticky-recorder .sticky-recorder .manual-add-btn{
 .conv-v-spoken:empty::before{content:'…';color:var(--muted);}
 .conv-v-clearbtn{background:none;border:none;color:var(--muted);font-size:13px;cursor:pointer;padding:0 2px;line-height:1;opacity:0.7;flex-shrink:0;}
 .conv-v-clearbtn:active{opacity:1;color:var(--rec);}
+.conv-hold-row{display:flex;gap:8px;margin-top:8px;align-items:stretch;}
+.conv-hold-row .conv-hold-btn{margin-top:0;flex:1;width:auto;}
+.conv-clear-btn{flex-shrink:0;padding:0 16px;border-radius:12px;border:2px solid var(--border);background:var(--surface2);color:var(--muted);font-family:'DM Mono',monospace;font-weight:600;cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;user-select:none;-webkit-user-select:none;-webkit-tap-highlight-color:transparent;transition:all 0.15s;}
+.conv-clear-btn:active{background:var(--rec);border-color:var(--rec);color:#fff;}
+.conv-clear-ico{font-size:15px;line-height:1;}
+.conv-clear-lbl{font-size:10px;line-height:1;}
 .conv-v-arrow-row{display:flex;align-items:center;justify-content:space-between;flex-shrink:0;}
 .conv-v-translated{flex:1;min-height:70px;background:rgba(0,0,0,0.1);border:1px solid rgba(255,255,255,0.06);border-radius:10px;padding:8px 11px;font-size:14px;line-height:1.55;color:var(--text);}
 .conv-v-translated:empty::before{content:'…';color:var(--muted);}
@@ -1470,7 +1476,7 @@ body.has-sticky-recorder .sticky-recorder .manual-add-btn{
   <div class="conv-v-inner" id="convInnerA">
     <div class="conv-v-header">
       <div class="conv-v-header-top">
-        <span class="conv-v-label conv-v-label-a">Person A</span>
+        <span id="convPersonLabelA" class="conv-v-label conv-v-label-a">Person A</span>
         <span id="convAStatus" class="conv-v-status"></span>
       </div>
       <div class="conv-v-header-row">
@@ -1535,21 +1541,26 @@ body.has-sticky-recorder .sticky-recorder .manual-add-btn{
     <div class="conv-v-body">
       <div id="convAText" class="conv-v-spoken"></div>
       <div class="conv-v-arrow-row">
-        <span style="font-size:10px;text-transform:uppercase;letter-spacing:0.08em;color:var(--muted);padding-left:2px;">↓ Übersetzung für A</span>
-        <button class="conv-v-clearbtn" onclick="clearConversationSide('A')" title="Person A zurücksetzen">✕</button>
+        <span id="convTransLabelA" style="font-size:10px;text-transform:uppercase;letter-spacing:0.08em;color:var(--muted);padding-left:2px;">↓ Übersetzung für A</span>
       </div>
       <div class="conv-v-trans-row">
         <div id="convBTransMirror" class="conv-v-translated" onclick="handleTransWordTap(event,'A')" title="Wort antippen für Erklärung"></div>
         <button class="conv-v-speakbtn" onclick="repeatConversationTranslation('B')" title="Übersetzung vorlesen">🔊</button>
       </div>
-      <div class="conv-v-word-hint">💡 Wort antippen für Erklärung</div>
-      <button id="convHoldA" class="conv-hold-btn"
-        onmousedown="convHoldStart('A',event)" onmouseup="convHoldEnd('A',event)" onmouseleave="convHoldEnd('A',event)"
-        ontouchstart="convHoldStart('A',event)" ontouchend="convHoldEnd('A',event)" ontouchcancel="convHoldEnd('A',event)"
-        oncontextmenu="return false;">
-        <span class="conv-hold-ico">🎤</span>
-        <span class="conv-hold-lbl">Halten zum Sprechen</span>
-      </button>
+      <div id="convWordHintA" class="conv-v-word-hint">💡 Wort antippen für Erklärung</div>
+      <div class="conv-hold-row">
+        <button id="convHoldA" class="conv-hold-btn"
+          onmousedown="convHoldStart('A',event)" onmouseup="convHoldEnd('A',event)" onmouseleave="convHoldEnd('A',event)"
+          ontouchstart="convHoldStart('A',event)" ontouchend="convHoldEnd('A',event)" ontouchcancel="convHoldEnd('A',event)"
+          oncontextmenu="return false;">
+          <span class="conv-hold-ico">🎤</span>
+          <span class="conv-hold-lbl">Halten zum Sprechen</span>
+        </button>
+        <button id="convClearA" class="conv-clear-btn" onclick="clearConvSpoken('A')" title="Gesprochenes löschen">
+          <span class="conv-clear-ico">✕</span>
+          <span class="conv-clear-lbl">Löschen</span>
+        </button>
+      </div>
     </div>
   </div>
 </div>
@@ -1559,7 +1570,7 @@ body.has-sticky-recorder .sticky-recorder .manual-add-btn{
   <div class="conv-v-inner" id="convInnerB">
     <div class="conv-v-header">
       <div class="conv-v-header-top">
-        <span class="conv-v-label conv-v-label-b">Person B</span>
+        <span id="convPersonLabelB" class="conv-v-label conv-v-label-b">Person B</span>
         <span id="convBStatus" class="conv-v-status"></span>
       </div>
       <div class="conv-v-header-row">
@@ -1624,21 +1635,26 @@ body.has-sticky-recorder .sticky-recorder .manual-add-btn{
     <div class="conv-v-body">
       <div id="convBText" class="conv-v-spoken"></div>
       <div class="conv-v-arrow-row">
-        <span style="font-size:10px;text-transform:uppercase;letter-spacing:0.08em;color:var(--muted);padding-left:2px;">↓ Übersetzung für B</span>
-        <button class="conv-v-clearbtn" onclick="clearConversationSide('B')" title="Person B zurücksetzen">✕</button>
+        <span id="convTransLabelB" style="font-size:10px;text-transform:uppercase;letter-spacing:0.08em;color:var(--muted);padding-left:2px;">↓ Übersetzung für B</span>
       </div>
       <div class="conv-v-trans-row">
         <div id="convATrans" class="conv-v-translated" onclick="handleTransWordTap(event,'B')" title="Wort antippen für Erklärung"></div>
         <button class="conv-v-speakbtn" onclick="repeatConversationTranslation('A')" title="Übersetzung vorlesen">🔊</button>
       </div>
-      <div class="conv-v-word-hint">💡 Wort antippen für Erklärung</div>
-      <button id="convHoldB" class="conv-hold-btn"
-        onmousedown="convHoldStart('B',event)" onmouseup="convHoldEnd('B',event)" onmouseleave="convHoldEnd('B',event)"
-        ontouchstart="convHoldStart('B',event)" ontouchend="convHoldEnd('B',event)" ontouchcancel="convHoldEnd('B',event)"
-        oncontextmenu="return false;">
-        <span class="conv-hold-ico">🎤</span>
-        <span class="conv-hold-lbl">Halten zum Sprechen</span>
-      </button>
+      <div id="convWordHintB" class="conv-v-word-hint">💡 Wort antippen für Erklärung</div>
+      <div class="conv-hold-row">
+        <button id="convHoldB" class="conv-hold-btn"
+          onmousedown="convHoldStart('B',event)" onmouseup="convHoldEnd('B',event)" onmouseleave="convHoldEnd('B',event)"
+          ontouchstart="convHoldStart('B',event)" ontouchend="convHoldEnd('B',event)" ontouchcancel="convHoldEnd('B',event)"
+          oncontextmenu="return false;">
+          <span class="conv-hold-ico">🎤</span>
+          <span class="conv-hold-lbl">Halten zum Sprechen</span>
+        </button>
+        <button id="convClearB" class="conv-clear-btn" onclick="clearConvSpoken('B')" title="Gesprochenes löschen">
+          <span class="conv-clear-ico">✕</span>
+          <span class="conv-clear-lbl">Löschen</span>
+        </button>
+      </div>
     </div>
   </div>
 </div>
@@ -2628,6 +2644,166 @@ var convTranslateTimer = null;
 var convLastTranslationA = '';
 var convLastTranslationB = '';
 
+// ── Lokalisierbare Box-Beschriftungen (Gesprächsmodus) ──
+// Jede Box wird in ihrer eigenen gewählten Sprache beschriftet. Alle Sprachen
+// der Auswahlliste sind fest hinterlegt (CONV_UI_LABELS) – funktioniert sofort,
+// offline und ohne API-Schlüssel. Nicht hinterlegte Sprachen werden – falls ein
+// Schlüssel vorhanden ist – einmalig per API übersetzt und in localStorage gecacht.
+var CONV_UI_LABELS_DE = {
+  person: 'Person',
+  ready: 'Bereit',
+  listening: '🎙 Hört zu…',
+  transFor: 'Übersetzung für',
+  wordHint: 'Wort antippen für Erklärung',
+  hold: 'Halten zum Sprechen',
+  holdActive: 'Loslassen zum Stoppen',
+  clear: 'Löschen',
+  clearTitle: 'Gesprochenes löschen',
+  micDenied: 'Mikrofon verweigert',
+  langUnsupported: 'Sprache nicht unterstützt',
+  cantStart: 'Konnte nicht starten',
+  errorPrefix: 'Fehler:'
+};
+// Statisches Wörterbuch für alle Sprachen der Auswahlliste.
+// Reihenfolge der Schlüssel wie in CONV_UI_LABELS_DE.
+var CONV_UI_LABELS = {
+  'Deutsch': CONV_UI_LABELS_DE,
+  'Englisch': { person:'Person', ready:'Ready', listening:'🎙 Listening…', transFor:'Translation for', wordHint:'Tap a word for an explanation', hold:'Hold to speak', holdActive:'Release to stop', clear:'Clear', clearTitle:'Clear what was said', micDenied:'Microphone denied', langUnsupported:'Language not supported', cantStart:'Could not start', errorPrefix:'Error:' },
+  'Französisch': { person:'Personne', ready:'Prêt', listening:'🎙 Écoute…', transFor:'Traduction pour', wordHint:'Touchez un mot pour l\'explication', hold:'Maintenir pour parler', holdActive:'Relâcher pour arrêter', clear:'Effacer', clearTitle:'Effacer ce qui a été dit', micDenied:'Micro refusé', langUnsupported:'Langue non prise en charge', cantStart:'Impossible de démarrer', errorPrefix:'Erreur :' },
+  'Spanisch': { person:'Persona', ready:'Listo', listening:'🎙 Escuchando…', transFor:'Traducción para', wordHint:'Toca una palabra para ver la explicación', hold:'Mantén pulsado para hablar', holdActive:'Suelta para detener', clear:'Borrar', clearTitle:'Borrar lo dicho', micDenied:'Micrófono denegado', langUnsupported:'Idioma no compatible', cantStart:'No se pudo iniciar', errorPrefix:'Error:' },
+  'Italienisch': { person:'Persona', ready:'Pronto', listening:'🎙 In ascolto…', transFor:'Traduzione per', wordHint:'Tocca una parola per la spiegazione', hold:'Tieni premuto per parlare', holdActive:'Rilascia per fermare', clear:'Cancella', clearTitle:'Cancella quanto detto', micDenied:'Microfono negato', langUnsupported:'Lingua non supportata', cantStart:'Impossibile avviare', errorPrefix:'Errore:' },
+  'Portugiesisch': { person:'Pessoa', ready:'Pronto', listening:'🎙 A ouvir…', transFor:'Tradução para', wordHint:'Toque numa palavra para ver a explicação', hold:'Manter para falar', holdActive:'Soltar para parar', clear:'Limpar', clearTitle:'Limpar o que foi dito', micDenied:'Microfone recusado', langUnsupported:'Idioma não suportado', cantStart:'Não foi possível iniciar', errorPrefix:'Erro:' },
+  'Niederländisch': { person:'Persoon', ready:'Klaar', listening:'🎙 Luistert…', transFor:'Vertaling voor', wordHint:'Tik op een woord voor uitleg', hold:'Ingedrukt houden om te spreken', holdActive:'Loslaten om te stoppen', clear:'Wissen', clearTitle:'Wis het gesprokene', micDenied:'Microfoon geweigerd', langUnsupported:'Taal niet ondersteund', cantStart:'Kon niet starten', errorPrefix:'Fout:' },
+  'Polnisch': { person:'Osoba', ready:'Gotowe', listening:'🎙 Słucham…', transFor:'Tłumaczenie dla', wordHint:'Dotknij słowa, aby zobaczyć wyjaśnienie', hold:'Przytrzymaj, aby mówić', holdActive:'Puść, aby zatrzymać', clear:'Wyczyść', clearTitle:'Wyczyść wypowiedź', micDenied:'Odmowa dostępu do mikrofonu', langUnsupported:'Język nieobsługiwany', cantStart:'Nie można uruchomić', errorPrefix:'Błąd:' },
+  'Russisch': { person:'Человек', ready:'Готово', listening:'🎙 Слушаю…', transFor:'Перевод для', wordHint:'Коснитесь слова для пояснения', hold:'Удерживайте, чтобы говорить', holdActive:'Отпустите, чтобы остановить', clear:'Очистить', clearTitle:'Очистить сказанное', micDenied:'Доступ к микрофону запрещён', langUnsupported:'Язык не поддерживается', cantStart:'Не удалось запустить', errorPrefix:'Ошибка:' },
+  'Ukrainisch': { person:'Людина', ready:'Готово', listening:'🎙 Слухаю…', transFor:'Переклад для', wordHint:'Торкніться слова для пояснення', hold:'Утримуйте, щоб говорити', holdActive:'Відпустіть, щоб зупинити', clear:'Очистити', clearTitle:'Очистити сказане', micDenied:'Доступ до мікрофона заборонено', langUnsupported:'Мова не підтримується', cantStart:'Не вдалося запустити', errorPrefix:'Помилка:' },
+  'Schwedisch': { person:'Person', ready:'Klar', listening:'🎙 Lyssnar…', transFor:'Översättning för', wordHint:'Tryck på ett ord för förklaring', hold:'Håll in för att tala', holdActive:'Släpp för att stoppa', clear:'Rensa', clearTitle:'Rensa det sagda', micDenied:'Mikrofon nekad', langUnsupported:'Språket stöds inte', cantStart:'Kunde inte starta', errorPrefix:'Fel:' },
+  'Norwegisch': { person:'Person', ready:'Klar', listening:'🎙 Lytter…', transFor:'Oversettelse for', wordHint:'Trykk på et ord for forklaring', hold:'Hold inne for å snakke', holdActive:'Slipp for å stoppe', clear:'Tøm', clearTitle:'Tøm det sagte', micDenied:'Mikrofon avvist', langUnsupported:'Språket støttes ikke', cantStart:'Kunne ikke starte', errorPrefix:'Feil:' },
+  'Dänisch': { person:'Person', ready:'Klar', listening:'🎙 Lytter…', transFor:'Oversættelse for', wordHint:'Tryk på et ord for forklaring', hold:'Hold nede for at tale', holdActive:'Slip for at stoppe', clear:'Ryd', clearTitle:'Ryd det sagte', micDenied:'Mikrofon nægtet', langUnsupported:'Sproget understøttes ikke', cantStart:'Kunne ikke starte', errorPrefix:'Fejl:' },
+  'Finnisch': { person:'Henkilö', ready:'Valmis', listening:'🎙 Kuuntelee…', transFor:'Käännös kielelle', wordHint:'Napauta sanaa nähdäksesi selityksen', hold:'Pidä painettuna puhuaksesi', holdActive:'Vapauta lopettaaksesi', clear:'Tyhjennä', clearTitle:'Tyhjennä sanottu', micDenied:'Mikrofoni estetty', langUnsupported:'Kieltä ei tueta', cantStart:'Käynnistys epäonnistui', errorPrefix:'Virhe:' },
+  'Griechisch': { person:'Άτομο', ready:'Έτοιμο', listening:'🎙 Ακούει…', transFor:'Μετάφραση για', wordHint:'Πατήστε μια λέξη για εξήγηση', hold:'Κρατήστε για ομιλία', holdActive:'Αφήστε για διακοπή', clear:'Εκκαθάριση', clearTitle:'Εκκαθάριση όσων ειπώθηκαν', micDenied:'Άρνηση μικροφώνου', langUnsupported:'Η γλώσσα δεν υποστηρίζεται', cantStart:'Αδυναμία εκκίνησης', errorPrefix:'Σφάλμα:' },
+  'Rumänisch': { person:'Persoană', ready:'Gata', listening:'🎙 Ascultă…', transFor:'Traducere pentru', wordHint:'Atinge un cuvânt pentru explicație', hold:'Ține apăsat pentru a vorbi', holdActive:'Eliberează pentru a opri', clear:'Șterge', clearTitle:'Șterge ce s-a spus', micDenied:'Microfon refuzat', langUnsupported:'Limbă neacceptată', cantStart:'Nu s-a putut porni', errorPrefix:'Eroare:' },
+  'Tschechisch': { person:'Osoba', ready:'Připraveno', listening:'🎙 Poslouchá…', transFor:'Překlad pro', wordHint:'Klepněte na slovo pro vysvětlení', hold:'Podržte pro mluvení', holdActive:'Uvolněte pro zastavení', clear:'Vymazat', clearTitle:'Vymazat řečené', micDenied:'Mikrofon odmítnut', langUnsupported:'Jazyk není podporován', cantStart:'Nelze spustit', errorPrefix:'Chyba:' },
+  'Ungarisch': { person:'Személy', ready:'Kész', listening:'🎙 Hallgat…', transFor:'Fordítás ide:', wordHint:'Érintsen meg egy szót a magyarázathoz', hold:'Tartsa lenyomva a beszédhez', holdActive:'Engedje el a leállításhoz', clear:'Törlés', clearTitle:'Az elmondottak törlése', micDenied:'Mikrofon elutasítva', langUnsupported:'A nyelv nem támogatott', cantStart:'Nem sikerült elindítani', errorPrefix:'Hiba:' },
+  'Albanisch': { person:'Person', ready:'Gati', listening:'🎙 Duke dëgjuar…', transFor:'Përkthimi për', wordHint:'Prekni një fjalë për shpjegim', hold:'Mbani shtypur për të folur', holdActive:'Lëshoni për të ndaluar', clear:'Pastro', clearTitle:'Pastro atë që u tha', micDenied:'Mikrofoni u refuzua', langUnsupported:'Gjuha nuk mbështetet', cantStart:'Nuk mund të nisej', errorPrefix:'Gabim:' },
+  'Kroatisch': { person:'Osoba', ready:'Spremno', listening:'🎙 Sluša…', transFor:'Prijevod za', wordHint:'Dodirnite riječ za objašnjenje', hold:'Držite za govor', holdActive:'Pustite za zaustavljanje', clear:'Očisti', clearTitle:'Očisti izgovoreno', micDenied:'Mikrofon odbijen', langUnsupported:'Jezik nije podržan', cantStart:'Nije moguće pokrenuti', errorPrefix:'Pogreška:' },
+  'Serbisch': { person:'Особа', ready:'Спремно', listening:'🎙 Слуша…', transFor:'Превод за', wordHint:'Додирните реч за објашњење', hold:'Држите да говорите', holdActive:'Пустите да зауставите', clear:'Обриши', clearTitle:'Обриши изговорено', micDenied:'Микрофон одбијен', langUnsupported:'Језик није подржан', cantStart:'Није могуће покренути', errorPrefix:'Грешка:' },
+  'Slowakisch': { person:'Osoba', ready:'Pripravené', listening:'🎙 Počúva…', transFor:'Preklad pre', wordHint:'Ťuknite na slovo pre vysvetlenie', hold:'Podržte pre hovorenie', holdActive:'Uvoľnite pre zastavenie', clear:'Vymazať', clearTitle:'Vymazať povedané', micDenied:'Mikrofón zamietnutý', langUnsupported:'Jazyk nie je podporovaný', cantStart:'Nepodarilo sa spustiť', errorPrefix:'Chyba:' },
+  'Bulgarisch': { person:'Човек', ready:'Готово', listening:'🎙 Слуша…', transFor:'Превод за', wordHint:'Докоснете дума за обяснение', hold:'Задръжте, за да говорите', holdActive:'Пуснете, за да спрете', clear:'Изчисти', clearTitle:'Изчисти казаното', micDenied:'Достъпът до микрофона е отказан', langUnsupported:'Езикът не се поддържа', cantStart:'Неуспешно стартиране', errorPrefix:'Грешка:' },
+  'Türkisch': { person:'Kişi', ready:'Hazır', listening:'🎙 Dinliyor…', transFor:'Çeviri', wordHint:'Açıklama için bir kelimeye dokunun', hold:'Konuşmak için basılı tutun', holdActive:'Durdurmak için bırakın', clear:'Temizle', clearTitle:'Söylenenleri temizle', micDenied:'Mikrofon reddedildi', langUnsupported:'Dil desteklenmiyor', cantStart:'Başlatılamadı', errorPrefix:'Hata:' },
+  'Arabisch': { person:'شخص', ready:'جاهز', listening:'🎙 يستمع…', transFor:'الترجمة لـ', wordHint:'انقر على كلمة لعرض الشرح', hold:'اضغط مع الاستمرار للتحدث', holdActive:'حرّر للإيقاف', clear:'مسح', clearTitle:'مسح ما قيل', micDenied:'تم رفض الميكروفون', langUnsupported:'اللغة غير مدعومة', cantStart:'تعذّر البدء', errorPrefix:'خطأ:' },
+  'Persisch': { person:'شخص', ready:'آماده', listening:'🎙 در حال شنیدن…', transFor:'ترجمه برای', wordHint:'برای توضیح روی یک کلمه ضربه بزنید', hold:'برای صحبت نگه دارید', holdActive:'برای توقف رها کنید', clear:'پاک کردن', clearTitle:'پاک کردن گفته‌ها', micDenied:'میکروفون رد شد', langUnsupported:'زبان پشتیبانی نمی‌شود', cantStart:'شروع نشد', errorPrefix:'خطا:' },
+  'Hebräisch': { person:'אדם', ready:'מוכן', listening:'🎙 מקשיב…', transFor:'תרגום עבור', wordHint:'הקש על מילה להסבר', hold:'החזק כדי לדבר', holdActive:'שחרר כדי לעצור', clear:'נקה', clearTitle:'נקה את הנאמר', micDenied:'הגישה למיקרופון נדחתה', langUnsupported:'השפה אינה נתמכת', cantStart:'לא ניתן להתחיל', errorPrefix:'שגיאה:' },
+  'Chinesisch vereinfacht': { person:'发言人', ready:'就绪', listening:'🎙 正在聆听…', transFor:'翻译给', wordHint:'点按词语查看解释', hold:'按住说话', holdActive:'松开停止', clear:'清除', clearTitle:'清除所说内容', micDenied:'麦克风被拒绝', langUnsupported:'不支持该语言', cantStart:'无法启动', errorPrefix:'错误：' },
+  'Chinesisch traditionell': { person:'發言人', ready:'就緒', listening:'🎙 正在聆聽…', transFor:'翻譯給', wordHint:'點按詞語查看解釋', hold:'按住說話', holdActive:'放開停止', clear:'清除', clearTitle:'清除所說內容', micDenied:'麥克風被拒絕', langUnsupported:'不支援該語言', cantStart:'無法啟動', errorPrefix:'錯誤：' },
+  'Japanisch': { person:'話者', ready:'準備完了', listening:'🎙 聞き取り中…', transFor:'翻訳先', wordHint:'単語をタップで説明', hold:'押して話す', holdActive:'離して停止', clear:'消去', clearTitle:'発言を消去', micDenied:'マイクが拒否されました', langUnsupported:'この言語は未対応です', cantStart:'開始できませんでした', errorPrefix:'エラー:' },
+  'Koreanisch': { person:'화자', ready:'준비됨', listening:'🎙 듣는 중…', transFor:'번역 대상:', wordHint:'단어를 탭하면 설명', hold:'눌러서 말하기', holdActive:'놓으면 정지', clear:'지우기', clearTitle:'말한 내용 지우기', micDenied:'마이크 거부됨', langUnsupported:'지원되지 않는 언어', cantStart:'시작할 수 없음', errorPrefix:'오류:' },
+  'Hindi': { person:'व्यक्ति', ready:'तैयार', listening:'🎙 सुन रहा है…', transFor:'अनुवाद के लिए', wordHint:'समझने के लिए किसी शब्द पर टैप करें', hold:'बोलने के लिए दबाए रखें', holdActive:'रोकने के लिए छोड़ें', clear:'साफ़ करें', clearTitle:'कही गई बात साफ़ करें', micDenied:'माइक्रोफ़ोन अस्वीकृत', langUnsupported:'भाषा समर्थित नहीं', cantStart:'शुरू नहीं हो सका', errorPrefix:'त्रुटि:' },
+  'Bengali': { person:'ব্যক্তি', ready:'প্রস্তুত', listening:'🎙 শুনছি…', transFor:'অনুবাদ', wordHint:'ব্যাখ্যার জন্য একটি শব্দে ট্যাপ করুন', hold:'কথা বলতে ধরে রাখুন', holdActive:'থামাতে ছেড়ে দিন', clear:'মুছুন', clearTitle:'যা বলা হয়েছে তা মুছুন', micDenied:'মাইক্রোফোন অ্যাক্সেস অস্বীকৃত', langUnsupported:'ভাষা সমর্থিত নয়', cantStart:'শুরু করা যায়নি', errorPrefix:'ত্রুটি:' },
+  'Urdu': { person:'شخص', ready:'تیار', listening:'🎙 سن رہا ہے…', transFor:'ترجمہ برائے', wordHint:'وضاحت کے لیے کسی لفظ پر ٹیپ کریں', hold:'بولنے کے لیے دبائے رکھیں', holdActive:'روکنے کے لیے چھوڑ دیں', clear:'صاف کریں', clearTitle:'کہی گئی بات صاف کریں', micDenied:'مائیکروفون تک رسائی مسترد', langUnsupported:'زبان کی معاونت دستیاب نہیں', cantStart:'شروع نہیں ہو سکا', errorPrefix:'خرابی:' },
+  'Vietnamesisch': { person:'Người', ready:'Sẵn sàng', listening:'🎙 Đang nghe…', transFor:'Bản dịch cho', wordHint:'Chạm vào một từ để xem giải thích', hold:'Giữ để nói', holdActive:'Thả để dừng', clear:'Xóa', clearTitle:'Xóa nội dung đã nói', micDenied:'Micrô bị từ chối', langUnsupported:'Ngôn ngữ không được hỗ trợ', cantStart:'Không thể bắt đầu', errorPrefix:'Lỗi:' },
+  'Thailändisch': { person:'บุคคล', ready:'พร้อม', listening:'🎙 กำลังฟัง…', transFor:'การแปลสำหรับ', wordHint:'แตะคำเพื่อดูคำอธิบาย', hold:'กดค้างเพื่อพูด', holdActive:'ปล่อยเพื่อหยุด', clear:'ล้าง', clearTitle:'ล้างสิ่งที่พูด', micDenied:'ไมโครโฟนถูกปฏิเสธ', langUnsupported:'ไม่รองรับภาษานี้', cantStart:'เริ่มไม่ได้', errorPrefix:'ข้อผิดพลาด:' },
+  'Indonesisch': { person:'Orang', ready:'Siap', listening:'🎙 Mendengarkan…', transFor:'Terjemahan untuk', wordHint:'Ketuk kata untuk penjelasan', hold:'Tahan untuk berbicara', holdActive:'Lepas untuk berhenti', clear:'Hapus', clearTitle:'Hapus yang diucapkan', micDenied:'Mikrofon ditolak', langUnsupported:'Bahasa tidak didukung', cantStart:'Tidak dapat memulai', errorPrefix:'Kesalahan:' },
+  'Malaiisch': { person:'Orang', ready:'Sedia', listening:'🎙 Mendengar…', transFor:'Terjemahan untuk', wordHint:'Ketik perkataan untuk penjelasan', hold:'Tahan untuk bercakap', holdActive:'Lepas untuk berhenti', clear:'Kosongkan', clearTitle:'Kosongkan yang diucapkan', micDenied:'Mikrofon ditolak', langUnsupported:'Bahasa tidak disokong', cantStart:'Tidak dapat bermula', errorPrefix:'Ralat:' },
+  'Philippinisch': { person:'Tao', ready:'Handa', listening:'🎙 Nakikinig…', transFor:'Pagsasalin para kay', wordHint:'I-tap ang isang salita para sa paliwanag', hold:'Pindutin nang matagal para magsalita', holdActive:'Bitawan para huminto', clear:'Burahin', clearTitle:'Burahin ang sinabi', micDenied:'Tinanggihan ang mikropono', langUnsupported:'Hindi suportado ang wika', cantStart:'Hindi makapagsimula', errorPrefix:'Error:' },
+  'Suaheli': { person:'Mtu', ready:'Tayari', listening:'🎙 Inasikiliza…', transFor:'Tafsiri kwa', wordHint:'Gusa neno kwa maelezo', hold:'Shikilia ili kuzungumza', holdActive:'Achia ili kusimamisha', clear:'Futa', clearTitle:'Futa yaliyosemwa', micDenied:'Kipaza sauti kimekataliwa', langUnsupported:'Lugha haitumiki', cantStart:'Imeshindwa kuanza', errorPrefix:'Hitilafu:' },
+  'Amharisch': { person:'ሰው', ready:'ዝግጁ', listening:'🎙 በማዳመጥ ላይ…', transFor:'ትርጉም ለ', wordHint:'ማብራሪያ ለማግኘት ቃል ይንኩ', hold:'ለመናገር ተጭነው ይያዙ', holdActive:'ለማቆም ይልቀቁ', clear:'አጽዳ', clearTitle:'የተባለውን አጽዳ', micDenied:'የማይክሮፎን ፍቃድ ተከልክሏል', langUnsupported:'ቋንቋው አይደገፍም', cantStart:'መጀመር አልተቻለም', errorPrefix:'ስህተት:' },
+  'Brasilianisches Portugiesisch': { person:'Pessoa', ready:'Pronto', listening:'🎙 Ouvindo…', transFor:'Tradução para', wordHint:'Toque em uma palavra para ver a explicação', hold:'Segure para falar', holdActive:'Solte para parar', clear:'Limpar', clearTitle:'Limpar o que foi dito', micDenied:'Microfone negado', langUnsupported:'Idioma não suportado', cantStart:'Não foi possível iniciar', errorPrefix:'Erro:' }
+};
+var convLabelFetching = {};
+function getConvLabelCache() {
+  try { return JSON.parse(localStorage.getItem('dk_conv_ui_labels') || '{}'); } catch(e) { return {}; }
+}
+function saveConvLabelCache(c) {
+  try { localStorage.setItem('dk_conv_ui_labels', JSON.stringify(c)); } catch(e) {}
+}
+function getConvBundle(lang) {
+  if (CONV_UI_LABELS[lang]) return CONV_UI_LABELS[lang];
+  var cache = getConvLabelCache();
+  return cache[lang] || null;
+}
+function convLangOf(side) {
+  var el = document.getElementById(side === 'A' ? 'convLangA' : 'convLangB');
+  return (el && el.value) ? el.value : 'Deutsch';
+}
+function convLabel(side, key) {
+  var b = getConvBundle(convLangOf(side)) || CONV_UI_LABELS_DE;
+  return b[key] || CONV_UI_LABELS_DE[key] || '';
+}
+function applyConvBoxLabels(side) {
+  var lang = convLangOf(side);
+  var b = getConvBundle(lang);
+  if (!b) { fetchConvLabels(lang); b = CONV_UI_LABELS_DE; }
+  var setTxt = function(id, txt) { var el = document.getElementById(id); if (el) el.textContent = txt; };
+  setTxt('convPersonLabel' + side, b.person + ' ' + side);
+  setTxt('convTransLabel' + side, '↓ ' + b.transFor + ' ' + side);
+  setTxt('convWordHint' + side, '💡 ' + b.wordHint);
+  var hold = document.getElementById('convHold' + side);
+  if (hold && !hold.classList.contains('active')) {
+    var hl = hold.querySelector('.conv-hold-lbl'); if (hl) hl.textContent = b.hold;
+  }
+  var clr = document.getElementById('convClear' + side);
+  if (clr) {
+    var cl = clr.querySelector('.conv-clear-lbl'); if (cl) cl.textContent = b.clear;
+    clr.title = b.clearTitle;
+  }
+  if (convActiveSpeaker !== side) {
+    var st = document.getElementById(side === 'A' ? 'convAStatus' : 'convBStatus');
+    // Nur setzen, wenn leer oder aktuell ein (anderssprachiges) "Bereit" – Fehlertexte nicht überschreiben.
+    var cur = st ? st.textContent : '';
+    var isReady = !cur;
+    if (cur) {
+      for (var k in CONV_UI_LABELS) { if (CONV_UI_LABELS[k].ready === cur) { isReady = true; break; } }
+    }
+    if (st && isReady) st.textContent = b.ready;
+  }
+}
+function fetchConvLabels(lang) {
+  if (!lang || CONV_UI_LABELS[lang]) return;
+  if (convLabelFetching[lang]) return;
+  if (getConvLabelCache()[lang]) return;
+  if (!apiKey) return; // ohne Schlüssel bleibt es bei Deutsch als Fallback
+  convLabelFetching[lang] = true;
+  var payload = JSON.stringify(CONV_UI_LABELS_DE);
+  var prompt = 'Übersetze die WERTE dieses JSON-Objekts von Deutsch nach ' + lang + '. ' +
+    'Behalte alle Schlüssel exakt bei. Übersetze keine Emojis und keine Satzzeichen-Platzhalter. ' +
+    'Gib AUSSCHLIESSLICH das JSON zurück – ohne Erklärung, ohne Codeblock:\n\n' + payload;
+  fetch('https://api.anthropic.com/v1/messages', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'x-api-key': apiKey,
+      'anthropic-version': '2023-06-01',
+      'anthropic-dangerous-direct-browser-access': 'true'
+    },
+    body: JSON.stringify({
+      model: 'claude-sonnet-5',
+      max_tokens: 500,
+      thinking: {type:'disabled'},
+      messages: [{ role: 'user', content: prompt }]
+    })
+  }).then(function(r) { return r.json(); })
+    .then(function(d) {
+      registerUsage(d);
+      var txt = (anthropicText(d) || '').trim();
+      txt = txt.replace(/^```[a-zA-Z]*\s*/, '').replace(/```\s*$/, '').trim();
+      var obj = null;
+      try { obj = JSON.parse(txt); } catch(e) { obj = null; }
+      if (obj && typeof obj === 'object') {
+        var clean = {};
+        Object.keys(CONV_UI_LABELS_DE).forEach(function(k) {
+          clean[k] = (typeof obj[k] === 'string' && obj[k].trim()) ? obj[k].trim() : CONV_UI_LABELS_DE[k];
+        });
+        var cache = getConvLabelCache();
+        cache[lang] = clean;
+        saveConvLabelCache(cache);
+        ['A', 'B'].forEach(function(s) { if (convLangOf(s) === lang) applyConvBoxLabels(s); });
+      }
+      convLabelFetching[lang] = false;
+    })
+    .catch(function() { convLabelFetching[lang] = false; });
+}
+
 var CONV_SPEECH_CODES = {
   'Deutsch':'de-DE',
   'Englisch':'en-US',
@@ -2701,6 +2877,8 @@ function updateConversationChips() {
   var chipB = document.getElementById('convChipB');
   if (a && b && chipA) chipA.textContent = 'Spricht: ' + a.value + ' · Hört: ' + b.value;
   if (a && b && chipB) chipB.textContent = 'Spricht: ' + b.value + ' · Hört: ' + a.value;
+  applyConvBoxLabels('A');
+  applyConvBoxLabels('B');
 }
 
 function showConversationMode() {
@@ -2755,8 +2933,8 @@ function setConvStatus(side, text, isActive) {
 function stopConversationRec() {
   stopSilenceDetection();
   try { if (convRecognition) convRecognition.stop(); } catch(e) {}
-  if (convActiveSpeaker === 'A') setConvStatus('A', 'Bereit', false);
-  if (convActiveSpeaker === 'B') setConvStatus('B', 'Bereit', false);
+  if (convActiveSpeaker === 'A') setConvStatus('A', convLabel('A', 'ready'), false);
+  if (convActiveSpeaker === 'B') setConvStatus('B', convLabel('B', 'ready'), false);
   convActiveSpeaker = null;
 }
 
@@ -2769,7 +2947,7 @@ function convHoldStart(side, e) {
   if (btn && convActiveSpeaker === side) {
     btn.classList.add('active');
     var lbl = btn.querySelector('.conv-hold-lbl');
-    if (lbl) lbl.textContent = 'Loslassen zum Stoppen';
+    if (lbl) lbl.textContent = convLabel(side, 'holdActive');
   }
 }
 function convHoldEnd(side, e) {
@@ -2779,7 +2957,7 @@ function convHoldEnd(side, e) {
   if (btn) {
     btn.classList.remove('active');
     var lbl = btn.querySelector('.conv-hold-lbl');
-    if (lbl) lbl.textContent = 'Halten zum Sprechen';
+    if (lbl) lbl.textContent = convLabel(side, 'hold');
   }
 }
 
@@ -2813,7 +2991,7 @@ function toggleConversationRec(side) {
   convRecognition.maxAlternatives = 1;
   convActiveSpeaker = side;
 
-  setConvStatus(side, '🎙 Hört zu…', true);
+  setConvStatus(side, convLabel(side, 'listening'), true);
 
   convRecognition.onresult = function(e) {
     var interim = '';
@@ -2848,7 +3026,7 @@ function toggleConversationRec(side) {
       // noch aktiv → weiterlaufen lassen (Browser stoppt periodisch von selbst)
       try { convRecognition.start(); } catch(e) {}
     } else {
-      setConvStatus(side, 'Bereit', false);
+      setConvStatus(side, convLabel(side, 'ready'), false);
     }
   };
 
@@ -2859,13 +3037,13 @@ function toggleConversationRec(side) {
       return;
     }
     if (msg === 'not-allowed') {
-      setConvStatus(side, 'Mikrofon verweigert', false);
+      setConvStatus(side, convLabel(side, 'micDenied'), false);
       toast('Mikrofon-Zugriff verweigert – Einstellungen prüfen', 'err');
     } else if (msg === 'language-not-supported') {
-      setConvStatus(side, 'Sprache nicht unterstützt', false);
+      setConvStatus(side, convLabel(side, 'langUnsupported'), false);
       toast('Diese Sprache wird vom Browser nicht unterstützt: ' + langName, 'err');
     } else {
-      setConvStatus(side, 'Fehler: ' + msg, false);
+      setConvStatus(side, convLabel(side, 'errorPrefix') + ' ' + msg, false);
     }
     convActiveSpeaker = null;
   };
@@ -2874,7 +3052,7 @@ function toggleConversationRec(side) {
     convRecognition.start();
     startSilenceDetection(side);
   } catch(e) {
-    setConvStatus(side, 'Konnte nicht starten', false);
+    setConvStatus(side, convLabel(side, 'cantStart'), false);
     convActiveSpeaker = null;
   }
 }
@@ -3031,6 +3209,29 @@ function clearConversationSide(side) {
     if (trans) trans.textContent = '';
   }
   toast('Person ' + side + ' zurückgesetzt', 'ok');
+}
+
+// Nur das Gesprochene dieser Seite + dessen Übersetzung leeren,
+// damit der nächste Satz nicht zusammen mit dem alten neu übersetzt wird.
+function clearConvSpoken(side) {
+  clearTimeout(convTranslateTimer);
+  if (side === 'A') {
+    convFinalTextA = '';
+    convLastTranslationA = '';
+    var spA = document.getElementById('convAText');
+    var trA = document.getElementById('convATrans');
+    if (spA) spA.textContent = '';
+    if (trA) trA.textContent = '';
+  } else {
+    convFinalTextB = '';
+    convLastTranslationB = '';
+    var spB = document.getElementById('convBText');
+    var trB = document.getElementById('convBTransMirror');
+    if (spB) spB.textContent = '';
+    if (trB) trB.textContent = '';
+  }
+  try { saveConvSession(); } catch(e) {}
+  toast(convLabel(side, 'clear'), 'ok');
 }
 
 function clearConversationHistory() {

@@ -1,0 +1,12 @@
+{
+  "name": "zumdiktat",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Michaels Diktiergerät – Sprach-Diktat und Gesprächsmodus (statische index.html)",
+  "scripts": {
+    "test": "node tests/conv-i18n.test.js"
+  },
+  "devDependencies": {
+    "playwright-core": "1.55.1"
+  }
+}
