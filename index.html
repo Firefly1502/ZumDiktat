@@ -1724,6 +1724,11 @@ function anthropicText(d){
   return '';
 }
 
+// Gemeinsamer System-Prompt für ALLE Übersetzungswege: nagelt das Modell auf eine
+// reine Übersetzungs-Maschine fest – verhindert u.a. bei Thai/Arabisch/Chinesisch
+// die ungefragte Umschrift/Aussprache oder Zusatz-Erklärungen.
+var TRANSLATE_SYSTEM = 'Du bist eine reine Übersetzungs-Maschine. Gib AUSSCHLIESSLICH den in die Zielsprache übersetzten Text aus – sonst nichts. Keine Umschrift, keine Lautschrift oder Aussprache, keine Erklärungen, keine Anmerkungen, keine Alternativen, keine Zusätze in Klammern, keine Anführungszeichen, keine Einleitung. Bewahre Bedeutung, Ton und Zeichensetzung des Originals.';
+
 // =====================================================
 // THEME — identical to original, untouched
 // =====================================================
@@ -2198,7 +2203,8 @@ headers: {
 },
 body: JSON.stringify({
 model: 'claude-sonnet-5', max_tokens: 2600, thinking: {type:'disabled'},
-messages: [{role:'user', content:'Uebersetze den folgenden Text ins ' + lang + '. Gib NUR die Uebersetzung zurueck:\n\n' + corrected}]
+system: TRANSLATE_SYSTEM,
+messages: [{role:'user', content:'Uebersetze den folgenden Text ins ' + lang + '. Gib NUR die reine Uebersetzung zurueck, ohne Umschrift und ohne Erklaerungen:\n\n' + corrected}]
 })
 }).then(function(r) { return r.json(); })
 .then(function(d) {
@@ -2404,8 +2410,8 @@ document.getElementById('ltTgtText').textContent = '⏳ Übersetze…';
 document.getElementById('ltTgtText').style.color = 'var(--muted)';
 
 var prompt = (srcVal === 'auto')
-? 'Erkenne die Sprache des folgenden Textes automatisch und übersetze ihn ins ' + tgtName + '. Gib NUR die Übersetzung zurück, ohne Erklärungen:\n\n' + text
-: 'Übersetze den folgenden Text von ' + srcName + ' nach ' + tgtName + '. Gib NUR die Übersetzung zurück, ohne Erklärungen:\n\n' + text;
+? 'Erkenne die Sprache des folgenden Textes automatisch und übersetze ihn ins ' + tgtName + '. Gib NUR die reine Übersetzung zurück, ohne Umschrift und ohne Erklärungen:\n\n' + text
+: 'Übersetze den folgenden Text von ' + srcName + ' nach ' + tgtName + '. Gib NUR die reine Übersetzung zurück, ohne Umschrift und ohne Erklärungen:\n\n' + text;
 
 fetch('https://api.anthropic.com/v1/messages', {
 method: 'POST',
@@ -2417,6 +2423,7 @@ headers: {
 },
 body: JSON.stringify({
 model: 'claude-sonnet-5', max_tokens: 1300, thinking: {type:'disabled'},
+system: TRANSLATE_SYSTEM,
 messages: [{role:'user', content: prompt}]
 })
 }).then(function(r) { return r.json(); })
@@ -3104,7 +3111,7 @@ function translateConversationSide(side, text) {
   if (outEl) { outEl.textContent = '⏳ Übersetze…'; outEl.style.color = 'var(--muted)'; }
 
   var prompt = 'Übersetze den folgenden Text von ' + fromLang + ' nach ' + toLang + '. ' +
-               'Gib nur die natürliche Übersetzung zurück, ohne Erklärung:\n\n' + text;
+               'Gib nur die reine, natürliche Übersetzung zurück, ohne Umschrift und ohne Erklärung:\n\n' + text;
 
   fetch('https://api.anthropic.com/v1/messages', {
     method: 'POST',
@@ -3118,6 +3125,7 @@ function translateConversationSide(side, text) {
       model: 'claude-sonnet-5',
       max_tokens: 800,
       thinking: {type:'disabled'},
+      system: TRANSLATE_SYSTEM,
       messages: [{ role: 'user', content: prompt }]
     })
   }).then(function(r) { return r.json(); })
