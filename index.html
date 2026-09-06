@@ -1020,6 +1020,11 @@ body.has-sticky-recorder .sticky-recorder .manual-add-btn{
 .conv-v-gender{display:flex;gap:4px;}
 .conv-gender-btn{flex:1;background:none;border:1px solid var(--border);border-radius:6px;color:var(--muted);font-size:14px;line-height:1;padding:5px 0;cursor:pointer;transition:all 0.15s;text-align:center;}
 .conv-gender-btn.active{color:#fff;background:var(--accent);border-color:var(--accent);}
+.lt-ctrl-row{display:flex;gap:6px;margin:8px 0;}
+.lt-ctrl{flex:1;display:flex;align-items:center;justify-content:center;gap:6px;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:10px 6px;color:var(--text);font-family:'DM Mono',monospace;font-size:12px;font-weight:500;cursor:pointer;user-select:none;-webkit-user-select:none;touch-action:none;-webkit-tap-highlight-color:transparent;transition:all 0.15s;}
+.lt-ctrl.active{background:var(--rec);border-color:var(--rec);color:#fff;box-shadow:0 0 0 4px var(--rec-glow);}
+.lt-ctrl-clear{color:var(--muted);}
+.lt-ctrl-clear:active{color:var(--rec);border-color:var(--rec);}
 /* Feature 4: Geschwindigkeit pro Person */
 /* Feature 5: Wort-Erklärung Popup */
 .conv-word-popup{position:fixed;z-index:9999;background:var(--surface);border:1.5px solid var(--accent);border-radius:14px;padding:12px 14px 12px 14px;max-width:270px;box-shadow:0 8px 32px rgba(0,0,0,0.6);font-size:12px;line-height:1.6;color:var(--text);}
@@ -1354,18 +1359,25 @@ body.has-sticky-recorder .sticky-recorder .manual-add-btn{
     </optgroup>
   </select>
 
-  <!-- Source text box + mic + NEW: manual textarea -->
-  <div style="position:relative;margin-bottom:8px;">
-    <div id="ltSrcBox" style="background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:10px 44px 10px 12px;min-height:80px;font-size:13px;line-height:1.6;color:var(--text);word-break:break-word;">
-      <span id="ltSrcFinal"></span><span style="opacity:0.5;" id="ltSrcInterim"></span>
-      <span id="ltSrcPlaceholder" style="color:var(--muted);">Sprechen oder Text eingeben…</span>
-      <!-- NEW: inline textarea for typing -->
-      <textarea id="ltSrcTyped" placeholder="" oninput="ltTypedChanged()" style="display:none;width:100%;background:transparent;border:none;outline:none;font-family:'DM Mono',monospace;font-size:13px;color:var(--text);line-height:1.6;resize:none;min-height:56px;margin-top:4px;"></textarea>
-    </div>
-    <button id="ltMicBtn" onclick="toggleLtMic()" style="position:absolute;right:8px;top:8px;width:32px;height:32px;border-radius:50%;background:var(--accent);border:none;color:#fff;font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;">🎤</button>
+  <!-- Source: eine editierbare Textbox (Sprechen UND Tippen landen hier) -->
+  <textarea id="ltSrcInput" oninput="ltTypedChanged()" placeholder="Sprechen oder Text eingeben…" style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:10px 12px;min-height:84px;font-family:'DM Mono',monospace;font-size:13px;line-height:1.6;color:var(--text);outline:none;resize:vertical;"></textarea>
+  <div id="ltInterim" style="font-size:12px;color:var(--muted);min-height:0;margin:3px 2px 0;"></div>
+
+  <!-- Eingabe-Steuerung: Daueraufnahme (Tippen), Halten (Push-to-Talk), Löschen -->
+  <div class="lt-ctrl-row">
+    <button id="ltRecBtn" type="button" onclick="ltToggleRec()" class="lt-ctrl" title="Aufnahme starten/stoppen (dauerhaft)">
+      <span id="ltRecIco">🎤</span><span id="ltRecLbl">Aufnahme</span>
+    </button>
+    <button id="ltPttBtn" type="button" class="lt-ctrl" title="Zum Sprechen gedrückt halten"
+      onmousedown="ltPttStart(event)" onmouseup="ltPttEnd(event)" onmouseleave="ltPttEnd(event)"
+      ontouchstart="ltPttStart(event)" ontouchend="ltPttEnd(event)" ontouchcancel="ltPttEnd(event)"
+      oncontextmenu="return false;">
+      <span>🎙</span><span id="ltPttLbl">Halten</span>
+    </button>
+    <button id="ltClearBtn" type="button" onclick="clearLtSource()" class="lt-ctrl lt-ctrl-clear" title="Ausgangstext löschen">
+      <span>✕</span><span>Löschen</span>
+    </button>
   </div>
-  <!-- NEW: toggle between mic and typing -->
-  <button onclick="toggleLtTyping()" id="ltTypingToggle" style="width:100%;background:none;border:1px dashed var(--border);border-radius:8px;padding:6px;color:var(--muted);font-family:'DM Mono',monospace;font-size:11px;cursor:pointer;margin-bottom:8px;">&#9997;&#65039; Stattdessen tippen</button>
   <button id="ltSrcSpeakBtn" onclick="speakLt('src')" style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:8px;color:var(--text);font-family:'DM Mono',monospace;font-size:11px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;">🔊 Ausgangstext vorlesen</button>
 
   <!-- Swap button -->
@@ -2271,8 +2283,7 @@ document.getElementById('speakLabel').textContent = 'Vorlesen';
 // =====================================================
 // LIVE TRANSLATOR
 // =====================================================
-var ltRec = null, ltIsRec = false, ltFinalText = '', ltTransTimer = null;
-var ltTypingMode = false;
+var ltRec = null, ltIsRec = false, ltRecMode = null, ltTransTimer = null;
 
 function showLiveTranslator() {
 document.getElementById('liveTransPanel').style.display = 'block';
@@ -2282,50 +2293,60 @@ document.getElementById('liveTransPanel').scrollIntoView({behavior:'smooth', blo
 }
 
 function hideLiveTranslator() {
-stopLtMic();
+ltStopRec();
 document.getElementById('liveTransPanel').style.display = 'none';
 }
 
-// NEW: toggle between mic and typing in live translator
-function toggleLtTyping() {
-ltTypingMode = !ltTypingMode;
-var typed = document.getElementById('ltSrcTyped');
-var placeholder = document.getElementById('ltSrcPlaceholder');
-var micBtn = document.getElementById('ltMicBtn');
-var toggleBtn = document.getElementById('ltTypingToggle');
-if (ltTypingMode) {
-stopLtMic();
-typed.style.display = 'block';
-placeholder.style.display = 'none';
-micBtn.style.display = 'none';
-toggleBtn.textContent = '\uD83C\uDFA4 Stattdessen sprechen';
-typed.focus();
-} else {
-typed.style.display = 'none';
-placeholder.style.display = '';
-micBtn.style.display = 'flex';
-toggleBtn.textContent = '\u270F\uFE0F Stattdessen tippen';
+// Ausgangstext + \u00DCbersetzung leeren.
+function clearLtSource() {
+ltStopRec();
+document.getElementById('ltSrcInput').value = '';
+document.getElementById('ltInterim').textContent = '';
+var outEl = document.getElementById('ltTgtText');
+if (outEl) { outEl.textContent = '\u00DCbersetzung erscheint hier\u2026'; outEl.style.color = 'var(--muted)'; }
+clearTimeout(ltTransTimer);
 }
+
+// --- Aufnahme: Toggle (Daueraufnahme) und Push-to-Talk teilen denselben Kern ---
+function ltToggleRec() {
+if (ltIsRec && ltRecMode === 'toggle') ltStopRec();
+else if (!ltIsRec) ltStartRec('toggle');
+}
+function ltPttStart(e) {
+if (e && e.preventDefault) e.preventDefault();
+if (ltIsRec) return;
+ltStartRec('ptt');
+}
+function ltPttEnd(e) {
+if (e && e.preventDefault) e.preventDefault();
+if (ltIsRec && ltRecMode === 'ptt') ltStopRec();
+}
+function ltUpdateRecUI() {
+var recBtn = document.getElementById('ltRecBtn');
+var pttBtn = document.getElementById('ltPttBtn');
+var recLbl = document.getElementById('ltRecLbl');
+var pttLbl = document.getElementById('ltPttLbl');
+var recActive = ltIsRec && ltRecMode === 'toggle';
+var pttActive = ltIsRec && ltRecMode === 'ptt';
+if (recBtn) recBtn.classList.toggle('active', recActive);
+if (pttBtn) pttBtn.classList.toggle('active', pttActive);
+if (recLbl) recLbl.textContent = recActive ? 'Stopp' : 'Aufnahme';
+if (pttLbl) pttLbl.textContent = pttActive ? 'L\u00E4uft\u2026' : 'Halten';
 }
 
 function ltTypedChanged() {
-var text = document.getElementById('ltSrcTyped').value.trim();
-if (!text) return;
+var text = (document.getElementById('ltSrcInput').value || '').trim();
 var outEl = document.getElementById('ltTgtText');
-if (outEl) {
-outEl.textContent = '⏳ Live-Übersetzung…';
-outEl.style.color = 'var(--muted)';
+if (!text) {
+if (outEl) { outEl.textContent = 'Übersetzung erscheint hier…'; outEl.style.color = 'var(--muted)'; }
+return;
 }
+if (outEl) { outEl.textContent = '⏳ Live-Übersetzung…'; outEl.style.color = 'var(--muted)'; }
 clearTimeout(ltTransTimer);
 ltTransTimer = setTimeout(function() { runLtTranslation(text); }, 500);
 }
 
-function toggleLtMic() {
-if (ltIsRec) { stopLtMic(); }
-else { startLtMic(); }
-}
-
-function startLtMic() {
+function ltStartRec(mode) {
 if (!micGranted) { toast('Bitte erst Mikrofon erlauben', 'err'); return; }
 var SR = window.SpeechRecognition || window.webkitSpeechRecognition;
 if (!SR) { toast('Spracherkennung nicht verfügbar', 'err'); return; }
@@ -2335,37 +2356,26 @@ ltRec = new SR();
 ltRec.lang = (srcVal === 'auto') ? '' : srcVal;
 ltRec.continuous = true;
 ltRec.interimResults = true;
-ltFinalText = '';
+ltRecMode = mode;
 
-document.getElementById('ltSrcPlaceholder').style.display = 'none';
-document.getElementById('ltSrcFinal').textContent = '';
-document.getElementById('ltSrcInterim').textContent = '';
+var input = document.getElementById('ltSrcInput');
+var interimEl = document.getElementById('ltInterim');
 
 ltRec.onresult = function(e) {
-var interim = '';
-var newFinal = '';
+var interim = '', newFinal = '';
 for (var i = e.resultIndex; i < e.results.length; i++) {
 if (e.results[i].isFinal) newFinal += e.results[i][0].transcript;
 else interim += e.results[i][0].transcript;
 }
-
-var finalEl = document.getElementById('ltSrcFinal');
-var interimEl = document.getElementById('ltSrcInterim');
-var outEl = document.getElementById('ltTgtText');
-
 if (newFinal) {
-ltFinalText += newFinal;
-finalEl.textContent = ltFinalText;
+var base = input.value.replace(/\s+$/, '');
+input.value = (base ? base + ' ' : '') + newFinal.trim();
 }
-
-interimEl.textContent = interim ? ' ' + interim : '';
-
-var liveText = (ltFinalText + (interim ? ' ' + interim : '')).trim();
+if (interimEl) interimEl.textContent = interim ? '… ' + interim : '';
+var liveText = (input.value + (interim ? ' ' + interim : '')).trim();
 if (liveText) {
-if (outEl) {
-outEl.textContent = '⏳ Live-Übersetzung…';
-outEl.style.color = 'var(--muted)';
-}
+var outEl = document.getElementById('ltTgtText');
+if (outEl) { outEl.textContent = '⏳ Live-Übersetzung…'; outEl.style.color = 'var(--muted)'; }
 clearTimeout(ltTransTimer);
 ltTransTimer = setTimeout(function() { runLtTranslation(liveText); }, interim ? 450 : 350);
 }
@@ -2374,7 +2384,7 @@ ltTransTimer = setTimeout(function() { runLtTranslation(liveText); }, interim ? 
 ltRec.onerror = function(ev) {
 if (ev.error !== 'no-speech' && ev.error !== 'aborted') {
 toast('Fehler: ' + ev.error, 'err');
-stopLtMic();
+ltStopRec();
 }
 };
 
@@ -2385,19 +2395,19 @@ if (ltIsRec) { try { ltRec.start(); } catch(e2) {} }
 try { ltRec.start(); } catch(e) { toast('Mikrofon-Start fehlgeschlagen', 'err'); return; }
 
 ltIsRec = true;
-var btn = document.getElementById('ltMicBtn');
-btn.textContent = '⏹';
-btn.style.background = 'var(--rec)';
-btn.style.animation = 'pulse 1s infinite';
+ltUpdateRecUI();
 }
 
-function stopLtMic() {
+function ltStopRec() {
 ltIsRec = false;
+ltRecMode = null;
 if (ltRec) { try { ltRec.stop(); } catch(e) {} ltRec = null; }
-var btn = document.getElementById('ltMicBtn');
-btn.textContent = '🎤';
-btn.style.background = 'var(--accent)';
-btn.style.animation = '';
+var interimEl = document.getElementById('ltInterim');
+if (interimEl) interimEl.textContent = '';
+ltUpdateRecUI();
+// Nach dem Stoppen einmal sauber final übersetzen.
+var text = (document.getElementById('ltSrcInput').value || '').trim();
+if (text) { clearTimeout(ltTransTimer); runLtTranslation(text); }
 }
 
 function runLtTranslation(text) {
@@ -2454,11 +2464,9 @@ if (src.value === 'auto') { toast('Bitte zuerst eine Sprache wählen', 'err'); r
 var tmp = src.value;
 src.value = tgt.value;
 tgt.value = tmp;
-stopLtMic();
-ltFinalText = '';
-document.getElementById('ltSrcFinal').textContent = '';
-document.getElementById('ltSrcInterim').textContent = '';
-document.getElementById('ltSrcPlaceholder').style.display = '';
+ltStopRec();
+document.getElementById('ltSrcInput').value = '';
+document.getElementById('ltInterim').textContent = '';
 document.getElementById('ltTgtText').textContent = 'Übersetzung erscheint hier…';
 document.getElementById('ltTgtText').style.color = 'var(--muted)';
 toast('Sprachen getauscht', 'ok');
@@ -2467,9 +2475,7 @@ toast('Sprachen getauscht', 'ok');
 function speakLt(which) {
 var text, langCode, btn;
 if (which === 'src') {
-text = ltTypingMode
-? document.getElementById('ltSrcTyped').value.trim()
-: document.getElementById('ltSrcFinal').textContent.trim();
+text = (document.getElementById('ltSrcInput').value || '').trim();
 var srcSel = document.getElementById('ltSrcLang');
 langCode = (srcSel.value === 'auto') ? 'de-DE' : srcSel.value;
 btn = document.getElementById('ltSrcSpeakBtn');
@@ -2543,16 +2549,10 @@ toastT = setTimeout(function(){ el.className = 'toast'; }, 3000);
   if (!tgt) return;
 
   tgt.addEventListener('change', function () {
-    var typedEl = document.getElementById('ltSrcTyped');
-    var finalEl = document.getElementById('ltSrcFinal');
-    var interimEl = document.getElementById('ltSrcInterim');
+    var inputEl = document.getElementById('ltSrcInput');
     var outEl = document.getElementById('ltTgtText');
 
-    var typed = typedEl ? typedEl.value.trim() : '';
-    var finalText = finalEl ? finalEl.textContent.trim() : '';
-    var interimText = interimEl ? interimEl.textContent.trim() : '';
-
-    var text = typed || (finalText + (interimText ? ' ' + interimText : '')).trim();
+    var text = inputEl ? (inputEl.value || '').trim() : '';
 
     if (!text) return;
 
