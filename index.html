@@ -1015,9 +1015,10 @@ body.has-sticky-recorder .sticky-recorder .manual-add-btn{
 .conv-v-trans-row .conv-v-translated{flex:1;}
 .conv-v-speakbtn{background:none;border:1px solid var(--border);border-radius:8px;color:var(--muted);font-size:15px;padding:7px 8px;cursor:pointer;flex-shrink:0;transition:color 0.15s,border-color 0.15s;line-height:1;}
 .conv-v-speakbtn:active{color:var(--ok);border-color:var(--ok);}
-.conv-v-voicecol{display:flex;flex-direction:column;align-items:center;gap:4px;flex-shrink:0;}
-.conv-v-gender{display:flex;gap:3px;}
-.conv-gender-btn{background:none;border:1px solid var(--border);border-radius:6px;color:var(--muted);font-size:13px;line-height:1;padding:3px 6px;cursor:pointer;transition:all 0.15s;}
+.conv-v-voicecol{display:flex;flex-direction:column;align-items:stretch;gap:5px;flex-shrink:0;width:56px;}
+.conv-v-voicecol .conv-v-speakbtn{width:100%;padding:7px 0;text-align:center;}
+.conv-v-gender{display:flex;gap:4px;}
+.conv-gender-btn{flex:1;background:none;border:1px solid var(--border);border-radius:6px;color:var(--muted);font-size:14px;line-height:1;padding:5px 0;cursor:pointer;transition:all 0.15s;text-align:center;}
 .conv-gender-btn.active{color:#fff;background:var(--accent);border-color:var(--accent);}
 /* Feature 4: Geschwindigkeit pro Person */
 /* Feature 5: Wort-Erklärung Popup */
@@ -1456,6 +1457,7 @@ body.has-sticky-recorder .sticky-recorder .manual-add-btn{
     <label style="display:flex;align-items:center;gap:5px;font-size:11px;color:var(--muted);cursor:pointer;" title="Aufnahme automatisch stoppen wenn Stille erkannt wird">
       <input type="checkbox" id="convAutoSilence" style="accent-color:var(--accent);width:13px;height:13px;">⏱ Stille
     </label>
+    <button class="res-btn" onclick="clearTranslationCache()" title="Übersetzungs-Cache leeren">🧹</button>
     <button class="res-btn" onclick="clearConversationHistory()" title="Alles löschen">↺</button>
     <button onclick="hideConversationMode()" style="background:none;border:none;color:var(--muted);font-size:20px;cursor:pointer;line-height:1;padding:0 2px;">✕</button>
   </div>
@@ -3163,8 +3165,8 @@ function translateConversationSide(side, text) {
 
 // Bekannte Stimmnamen der gängigen Plattformen (macOS/iOS, Windows, Android/Google).
 // Der Web-Speech-Standard liefert kein Geschlecht – daher heuristisch über den Namen.
-var CONV_FEMALE_NAMES = /\b(anna|petra|helena|katja|marlene|hedda|vicki|sabina|samantha|victoria|karen|moira|tessa|fiona|serena|kate|stephanie|allison|ava|susan|zoe|amelie|amélie|audrey|aurelie|julie|marie|chantal|virginie|paulina|ewa|zosia|monica|penelope|laia|montserrat|marisol|carla|alice|federica|elsa|luciana|joana|catarina|ines|milena|zuzana|iveta|alena|laura|ioana|dora|tatyana|katya|ekaterina|daria|alyona|zira|hazel|heather|catherine|nora|nicky|sara|lekha|damayanti|kanya|kyoko|otoya|yuna|sora|nanami|haruka|mei-jia|sin-ji|ting-ting|linh|lan)\b/;
-var CONV_MALE_NAMES = /\b(alex|fred|daniel|thomas|stefan|yannick|jorge|diego|juan|carlos|luca|cosimo|xander|maged|tarik|rishi|david|mark|george|oliver|aaron|arthur|gordon|nicolas|bruno|felipe|ricardo|hattori|yuri|pavel|maxim|cem|onur|wojciech|krzysztof|magnus|klaus|conrad|hans)\b/;
+var CONV_FEMALE_NAMES = /\b(anna|petra|helena|helene|viktoria|victoria|katja|marlene|hedda|vicki|sabina|samantha|karen|moira|tessa|fiona|serena|kate|stephanie|allison|ava|susan|zoe|amelie|amélie|audrey|aurelie|julie|marie|chantal|virginie|paulina|ewa|zosia|monica|penelope|laia|montserrat|marisol|carla|alice|federica|elsa|luciana|joana|catarina|ines|milena|zuzana|iveta|alena|laura|ioana|dora|tatyana|katya|ekaterina|daria|alyona|zira|hazel|heather|catherine|nora|nicky|sara|lekha|damayanti|kanya|kyoko|otoya|yuna|sora|nanami|haruka|mei-jia|sin-ji|ting-ting|linh|lan)\b/;
+var CONV_MALE_NAMES = /\b(alex|fred|daniel|thomas|stefan|markus|yannick|viktor|jorge|diego|juan|carlos|luca|cosimo|xander|maged|tarik|rishi|david|mark|george|oliver|aaron|arthur|gordon|nicolas|bruno|felipe|ricardo|hattori|yuri|pavel|maxim|cem|onur|wojciech|krzysztof|magnus|klaus|conrad|hans)\b/;
 function convVoiceGenderOf(v) {
   var n = (v && v.name ? v.name : '').toLowerCase();
   if (/female|weiblich|woman|\bfrau\b|femme|mujer|femminile|damstem/.test(n)) return 'f';
@@ -3180,10 +3182,20 @@ function convPickVoice(code, gender) {
     var base = code.split('-')[0].toLowerCase();
     var langVoices = voices.filter(function(v) { return v.lang && v.lang.toLowerCase().indexOf(base) === 0; });
     if (!langVoices.length) return null; // keine Stimme dieser Sprache → Browser-Standard
-    if (gender) {
-      var m = langVoices.filter(function(v) { return convVoiceGenderOf(v) === gender; });
-      if (m.length) return m[0];
+    if (!gender) return langVoices[0];
+    // 1) Stimme mit passendem, am Namen erkennbarem Geschlecht.
+    var wanted = langVoices.filter(function(v) { return convVoiceGenderOf(v) === gender; });
+    if (wanted.length) return wanted[0];
+    // 2) Kein Namens-Treffer: trotzdem für ♀ und ♂ UNTERSCHIEDLICHE Stimmen wählen,
+    //    solange mind. 2 vorhanden sind – sonst hört man keinen Unterschied.
+    var other = gender === 'f' ? 'm' : 'f';
+    var otherKnown = langVoices.some(function(v) { return convVoiceGenderOf(v) === other; });
+    if (otherKnown) {
+      var notOther = langVoices.filter(function(v) { return convVoiceGenderOf(v) !== other; });
+      if (notOther.length) return notOther[0];
     }
+    // 3) Gar keine Geschlechts-Info: deterministisch 0. Stimme für ♀, 1. für ♂.
+    if (gender === 'm' && langVoices.length > 1) return langVoices[1];
     return langVoices[0];
   } catch(e) { return null; }
 }
@@ -3480,6 +3492,11 @@ function setTransCache(key, val) {
     c[key] = val;
     localStorage.setItem('dk_trans_cache', JSON.stringify(c));
   } catch(e) {}
+}
+// Gespeicherte Übersetzungen verwerfen – erzwingt beim nächsten Mal eine frische Übersetzung.
+function clearTranslationCache() {
+  try { localStorage.removeItem('dk_trans_cache'); } catch(e) {}
+  toast('Übersetzungs-Cache geleert', 'ok');
 }
 
 // ══════════════════════════════════════════════
