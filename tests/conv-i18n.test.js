@@ -95,6 +95,19 @@ function expect(name, actual, expected) {
   var stored = await page.evaluate(function(){ try { return localStorage.getItem('dk_conv_voice_gender'); } catch(e){ return null; } });
   expect('A choice persisted', String(/"A"\s*:\s*"m"/.test(stored || '')), 'true');
 
+  // 6) Direkt-übersetzen: neue Bedienelemente vorhanden + Löschen wirkt
+  await page.evaluate(function(){ showLiveTranslator(); });
+  await page.waitForTimeout(150);
+  expect('LT source input exists', String((await page.$('#ltSrcInput')) !== null), 'true');
+  expect('LT record button exists', String((await page.$('#ltRecBtn')) !== null), 'true');
+  expect('LT hold (PTT) button exists', String((await page.$('#ltPttBtn')) !== null), 'true');
+  expect('LT clear button exists', String((await page.$('#ltClearBtn')) !== null), 'true');
+  await page.fill('#ltSrcInput', 'Testeingabe zum Löschen');
+  expect('LT input holds text', await page.$eval('#ltSrcInput', function(el){ return el.value; }), 'Testeingabe zum Löschen');
+  await page.click('#ltClearBtn');
+  await page.waitForTimeout(100);
+  expect('LT clear empties input', await page.$eval('#ltSrcInput', function(el){ return el.value; }), '');
+
   await browser.close();
 
   var failed = checks.filter(function(c) { return !c.ok; });
